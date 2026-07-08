@@ -151,18 +151,12 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .empty-state { text-align: center; padding: 50px; color: var(--text-muted); }
         .hidden { display: none !important; }
-        .worker-config { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-        [data-theme="light"] .worker-config { background: rgba(255,255,255,0.6); }
-        .worker-connected { border-color: var(--success) !important; background: rgba(0, 184, 148, 0.1) !important; }
-        .worker-status-box { background: var(--bg-card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
-        .worker-status-box .status-icon { font-size: 2em; }
         @media (max-width: 768px) {
             .sidebar { width: 100%; height: auto; position: relative; }
             .main-content { margin-right: 0; }
             .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
-<base target="_blank">
 </head>
 <body>
     <div class="sidebar">
@@ -187,10 +181,6 @@
             <div class="status-item">
                 <div class="status-dot inactive" id="monitorStatusDot"></div>
                 <span id="monitorStatusText">المراقبة متوقفة</span>
-            </div>
-            <div class="status-item">
-                <div class="status-dot inactive" id="workerStatusDot"></div>
-                <span id="workerStatusText">الـ Worker غير متصل</span>
             </div>
         </div>
     </div>
@@ -225,28 +215,6 @@
                     <small>يمكنك تحديد أي عدد من الدقائق (1 - 1440)</small>
                 </div>
                 <button class="btn btn-primary" id="btnCheckNow">🔄 فحص فوري</button>
-            </div>
-            <div class="section">
-                <h3>🔗 إعدادات الـ Worker</h3>
-                <div class="worker-config" id="workerConfigBox">
-                    <h4 style="color:var(--primary);margin-bottom:15px;">🔗 ربط الـ Worker</h4>
-                    <div class="form-group">
-                        <label>رابط الـ Worker URL</label>
-                        <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
-                    </div>
-                    <div style="display:flex;gap:10px;">
-                        <button class="btn btn-success" id="btnSaveWorker">💾 حفظ الرابط</button>
-                        <button class="btn btn-info" id="btnTestWorker">🧪 اختبار الاتصال</button>
-                    </div>
-                    <div id="workerTestResult" style="margin-top:15px;display:none;"></div>
-                </div>
-                <div class="worker-status-box" id="workerStatusBox">
-                    <div class="status-icon">🔗</div>
-                    <div>
-                        <h4 style="color:var(--primary);margin-bottom:5px;">الـ Worker</h4>
-                        <p id="workerStatusDesc" style="color:var(--text-muted);font-size:0.9em;">غير مربط - أدخل رابط الـ Worker أعلاه</p>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -437,7 +405,6 @@
     </div>
 
     <script>
-
         const DB = {
             get(key) {
                 try {
@@ -454,7 +421,6 @@
         const exchangeRates = { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 };
         let currentCurrency = 'USD';
         let siteColors = {};
-        let workerConnected = false;
         let monitorInterval = null;
 
         function initData() {
@@ -471,7 +437,7 @@
                 DB.set('telegram', { botToken: '', signature: '🤖 1Click Pay Monitor', users: [] });
             }
             if (!DB.get('settings')) {
-                DB.set('settings', { interval: 1, theme: 'dark', workerUrl: '' });
+                DB.set('settings', { interval: 1, theme: 'dark' });
             }
             if (!DB.get('logs')) DB.set('logs', []);
         }
@@ -480,8 +446,6 @@
             const current = document.documentElement.getAttribute('data-theme') || 'dark';
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            const icon = document.getElementById('themeIcon');
-            if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
             const settings = DB.get('settings') || {};
             settings.theme = next;
             DB.set('settings', settings);
@@ -491,8 +455,6 @@
             const settings = DB.get('settings') || {};
             const theme = settings.theme || 'dark';
             document.documentElement.setAttribute('data-theme', theme);
-            const icon = document.getElementById('themeIcon');
-            if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀️';
         }
 
         function showAlert(message, type, duration) {
@@ -555,12 +517,8 @@
             const data = getData();
             const monitorDot = document.getElementById('monitorStatusDot');
             const monitorText = document.getElementById('monitorStatusText');
-            const workerDot = document.getElementById('workerStatusDot');
-            const workerText = document.getElementById('workerStatusText');
             if (monitorDot) monitorDot.className = data.monitorActive ? 'status-dot active' : 'status-dot inactive';
             if (monitorText) monitorText.textContent = data.monitorActive ? 'المراقبة نشطة' : 'المراقبة متوقفة';
-            if (workerDot) workerDot.className = workerConnected ? 'status-dot active' : 'status-dot inactive';
-            if (workerText) workerText.textContent = workerConnected ? 'الـ Worker متصل' : 'الـ Worker غير متصل';
         }
 
         function getData() {
@@ -589,95 +547,6 @@
                 siteColors[siteId] = colors[Object.keys(siteColors).length % colors.length];
             }
             return siteColors[siteId];
-        }
-
-        // Worker Functions
-        function saveWorkerUrl() {
-            const urlInput = document.getElementById('workerUrlInput');
-            if (!urlInput) return;
-            const url = urlInput.value.trim();
-            if (!url) { showAlert('❌ الرجاء إدخال رابط الـ Worker'); return; }
-            try { new URL(url); } catch(e) { showAlert('❌ الرابط غير صالح'); return; }
-            const settings = DB.get('settings') || {};
-            settings.workerUrl = url;
-            DB.set('settings', settings);
-            log('💾 تم حفظ رابط الـ Worker', 'success');
-            showAlert('✅ تم حفظ رابط الـ Worker', 'success');
-            updateWorkerStatus();
-        }
-
-        function testWorkerConnection() {
-            const settings = DB.get('settings') || {};
-            const workerUrl = settings.workerUrl;
-            if (!workerUrl) { showAlert('❌ الرجاء حفظ رابط الـ Worker أولاً'); return; }
-            const resultDiv = document.getElementById('workerTestResult');
-            if (resultDiv) {
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<div class="loading-spinner" style="display:inline-block;vertical-align:middle;margin-left:10px;"></div> جاري الاختبار...';
-            }
-            fetch(workerUrl + '/api/status', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            }).then(function(response) {
-                if (response.ok) {
-                    workerConnected = true;
-                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--success)">✅ الاتصال ناجح!</span>';
-                    log('✅ اختبار الـ Worker ناجح', 'success');
-                } else {
-                    workerConnected = false;
-                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ فشل: HTTP ' + response.status + '</span>';
-                    log('❌ فشل اختبار الـ Worker', 'error');
-                }
-                updateWorkerStatus(); updateStatus();
-            }).catch(function(err) {
-                workerConnected = false;
-                if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ خطأ: ' + err.message + '</span>';
-                log('❌ خطأ في الاتصال: ' + err.message, 'error');
-                updateWorkerStatus(); updateStatus();
-            });
-        }
-
-        function updateWorkerStatus() {
-            const settings = DB.get('settings') || {};
-            const workerUrl = settings.workerUrl;
-            const statusBox = document.getElementById('workerStatusBox');
-            const statusDesc = document.getElementById('workerStatusDesc');
-            const configBox = document.getElementById('workerConfigBox');
-            if (statusBox && statusDesc) {
-                if (workerUrl) {
-                    if (workerConnected) {
-                        statusBox.classList.add('worker-connected');
-                        statusDesc.textContent = 'متصل: ' + workerUrl;
-                        if (configBox) configBox.classList.add('worker-connected');
-                    } else {
-                        statusBox.classList.remove('worker-connected');
-                        statusDesc.textContent = 'غير متصل: ' + workerUrl;
-                        if (configBox) configBox.classList.remove('worker-connected');
-                    }
-                } else {
-                    statusBox.classList.remove('worker-connected');
-                    statusDesc.textContent = 'غير مربط - أدخل رابط الـ Worker';
-                    if (configBox) configBox.classList.remove('worker-connected');
-                }
-            }
-        }
-
-        function callWorker(endpoint, body) {
-            const settings = DB.get('settings') || {};
-            const workerUrl = settings.workerUrl;
-            if (!workerUrl) { showAlert('❌ لم يتم ربط الـ Worker'); return Promise.resolve(null); }
-            const options = {
-                method: body ? 'POST' : 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            };
-            if (body) options.body = JSON.stringify(body);
-            return fetch(workerUrl + endpoint, options).then(function(res) {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            }).catch(function(err) {
-                log('❌ خطأ في الـ Worker: ' + err.message, 'error');
-                workerConnected = false; updateStatus(); return null;
-            });
         }
 
         // Sites
@@ -1045,6 +914,7 @@
             const userChatId = document.getElementById('userChatId');
             const userPriceDrop = document.getElementById('userPriceDrop');
             const userPriceRise = document.getElementById('userPriceRise');
+            const userPriceRise = document.getElementById('userPriceRise');
             const userBestPrice = document.getElementById('userBestPrice');
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
@@ -1102,33 +972,13 @@
 
         function startMonitoring() {
             const data = getData();
-            const settings = DB.get('settings') || {};
             const telegram = DB.get('telegram') || {};
             if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
                 showAlert('❌ أكمل إعدادات تلجرام', 'error'); return;
             }
-            if (workerConnected && settings.workerUrl) {
-                callWorker('/api/start-monitor', {
-                    config: { active: true, sites: data.sites.filter(function(s) { return s.active; }), telegram: telegram, interval: settings.interval }
-                }).then(function(result) {
-                    if (result && result.success) {
-                        data.monitorActive = true; setData(data); updateStatus();
-                        showAlert('✅ تم التفعيل عبر Worker', 'success', 8000);
-                        log('▶️ عبر Worker', 'success'); startMonitorLoop();
-                    } else {
-                        startLocalMonitoring();
-                    }
-                });
-            } else {
-                startLocalMonitoring();
-            }
-        }
-
-        function startLocalMonitoring() {
-            const data = getData();
             log('▶️ مراقبة محلية', 'success');
             data.monitorActive = true; setData(data); updateStatus();
-            showAlert('✅ تم التفعيل محلياً', 'success', 8000);
+            showAlert('✅ تم التفعيل', 'success', 8000);
             startMonitorLoop();
         }
 
@@ -1144,12 +994,6 @@
         }
 
         function stopMonitoring() {
-            const settings = DB.get('settings') || {};
-            if (workerConnected && settings.workerUrl) {
-                callWorker('/api/stop-monitor').then(function(result) {
-                    if (result && result.success) log('⏹️ Worker توقف', 'warning');
-                });
-            }
             const data = getData();
             data.monitorActive = false; setData(data); updateStatus();
             if (monitorInterval) { clearInterval(monitorInterval); monitorInterval = null; }
@@ -1181,35 +1025,18 @@
                         const change = product.price - lastPrice.price;
                         telegram.users.forEach(function(user) {
                             if (change > 0 && user.notifications.priceRise) {
-                                sendTelegramNotification(user.chatId, '📈 ارتفاع سعر
-
-' + product.name + '
-الموقع: ' + site.name + '
-القديم: $' + lastPrice.price + '
-الجديد: $' + product.price);
+                                sendTelegramNotification(user.chatId, '📈 ارتفاع سعر\n' + product.name + '\nالموقع: ' + site.name + '\nالقديم: $' + lastPrice.price + '\nالجديد: $' + product.price);
                             } else if (change < 0 && user.notifications.priceDrop) {
-                                sendTelegramNotification(user.chatId, '📉 انخفاض سعر
-
-' + product.name + '
-الموقع: ' + site.name + '
-القديم: $' + lastPrice.price + '
-الجديد: $' + product.price);
+                                sendTelegramNotification(user.chatId, '📉 انخفاض سعر\n' + product.name + '\nالموقع: ' + site.name + '\nالقديم: $' + lastPrice.price + '\nالجديد: $' + product.price);
                             }
                         });
                     }
                     if (lastPrice && lastPrice.available !== product.available) {
                         telegram.users.forEach(function(user) {
                             if (!product.available && user.notifications.outOfStock) {
-                                sendTelegramNotification(user.chatId, '⚠️ نفاد الكمية
-
-' + product.name + '
-الموقع: ' + site.name);
+                                sendTelegramNotification(user.chatId, '⚠️ نفاد الكمية\n' + product.name + '\nالموقع: ' + site.name);
                             } else if (product.available && user.notifications.backInStock) {
-                                sendTelegramNotification(user.chatId, '✅ توفر المنتج
-
-' + product.name + '
-الموقع: ' + site.name + '
-السعر: $' + product.price);
+                                sendTelegramNotification(user.chatId, '✅ توفر المنتج\n' + product.name + '\nالموقع: ' + site.name + '\nالسعر: $' + product.price);
                             }
                         });
                     }
@@ -1233,9 +1060,7 @@
             fetch('https://api.telegram.org/bot' + telegram.botToken + '/sendMessage', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: message + '
-
-' + (telegram.signature || '🤖 1Click Pay Monitor'), parse_mode: 'HTML' })
+                body: JSON.stringify({ chat_id: chatId, text: message + '\n' + (telegram.signature || '🤖 1Click Pay Monitor'), parse_mode: 'HTML' })
             }).catch(function(err) {
                 log('❌ خطأ تلجرام: ' + err.message, 'error');
             });
@@ -1244,16 +1069,14 @@
         // Utilities
         function exportProducts() {
             const data = getData();
-            let csv = 'المنتج,الموقع,السعر,الحالة,الفئة
-';
+            let csv = 'المنتج,الموقع,السعر,الحالة,الفئة\n';
             for (const siteId in data.products) {
                 const site = data.sites.find(function(s) { return s.id == siteId; });
                 data.products[siteId].forEach(function(p) {
-                    csv += '"' + p.name + '","' + (site ? site.name : '') + '",' + p.price + ',' + (p.available ? 'متوفر' : 'غير متوفر') + ',"' + p.category + '"
-';
+                    csv += '"' + p.name + '","' + (site ? site.name : '') + '",' + p.price + ',' + (p.available ? 'متوفر' : 'غير متوفر') + ',"' + p.category + '"\n';
                 });
             }
-            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'products_' + new Date().toISOString().split('T')[0] + '.csv';
@@ -1262,8 +1085,7 @@
 
         function exportLogs() {
             const logs = DB.get('logs') || [];
-            const text = logs.map(function(l) { return '[' + l.time + '] [' + l.type + '] ' + l.message; }).join('
-');
+            const text = logs.map(function(l) { return '[' + l.time + '] [' + l.type + '] ' + l.message; }).join('\n');
             const blob = new Blob([text], { type: 'text/plain' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -1299,12 +1121,6 @@
 
             const btnCheckNow = document.getElementById('btnCheckNow');
             if (btnCheckNow) btnCheckNow.addEventListener('click', checkNow);
-
-            const btnSaveWorker = document.getElementById('btnSaveWorker');
-            if (btnSaveWorker) btnSaveWorker.addEventListener('click', saveWorkerUrl);
-
-            const btnTestWorker = document.getElementById('btnTestWorker');
-            if (btnTestWorker) btnTestWorker.addEventListener('click', testWorkerConnection);
 
             const btnAddSite = document.getElementById('btnAddSite');
             if (btnAddSite) btnAddSite.addEventListener('click', addSite);
@@ -1365,12 +1181,10 @@
             const botToken = document.getElementById('botToken');
             const signature = document.getElementById('signature');
             const intervalInput = document.getElementById('intervalInput');
-            const workerUrlInput = document.getElementById('workerUrlInput');
             if (botToken) botToken.value = telegram.botToken || '';
             if (signature) signature.value = telegram.signature || '';
             if (intervalInput) intervalInput.value = settings.interval || 1;
-            if (workerUrlInput) workerUrlInput.value = settings.workerUrl || '';
-            updateWorkerStatus(); updateStatus(); loadSites();
+            updateStatus(); loadSites();
             log('🚀 تم التشغيل - v5.0', 'success');
             if (data.monitorActive) startMonitorLoop();
         };
