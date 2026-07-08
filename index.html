@@ -398,7 +398,11 @@
                     <label>نص التوقيع</label>
                     <input type="text" id="signature" value="🤖 1Click Pay Monitor">
                 </div>
-                <button class="btn btn-primary" id="btnSaveBot">💾 حفظ إعدادات البوت</button>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" id="btnSaveBot">💾 حفظ إعدادات البوت</button>
+                    <button class="btn btn-info" id="btnTestBot">🧪 تحقق من الربط</button>
+                </div>
+                <div id="botTestResult" style="margin-top:15px;display:none;"></div>
             </div>
             <div class="section">
                 <h3>👤 إدارة المستخدمين</h3>
@@ -977,58 +981,70 @@
             const settings = DB.get('settings') || {};
             const activeSites = data.sites.filter(function(s) { return s.active; });
             if (activeSites.length === 0) { showAlert('❌ لا توجد مواقع مفعلة'); return; }
-            log('🔄 جاري جلب المنتجات...', 'info');
+            log('🔄 جاري جلب المنتجات من ' + activeSites.length + ' موقع...', 'info');
             let processed = 0;
             activeSites.forEach(function(site) {
-                // ✅ Use Worker proxy if connected, otherwise try direct fetch
-                if (workerConnected && settings.workerUrl) {
-                    fetch(settings.workerUrl + '/api/fetch-products', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: site.url,
-                            token: site.token,
-                            format: site.format
-                        })
-                    }).then(function(response) {
-                        if (!response.ok) throw new Error('Worker HTTP ' + response.status);
-                        return response.json();
-                    }).then(function(result) {
-                        if (!result.success) throw new Error(result.error || 'Worker error');
-                        processProducts(site, result.data, data);
-                        processed++;
-                        checkAllProcessed(data, processed, activeSites.length);
-                    }).catch(function(err) {
-                        log('❌ Worker فشل في ' + site.name + ': ' + err.message + '، جرب الطلب المباشر...', 'warning');
-                        // Fallback to direct fetch
-                        fetchProductsDirect(site, data, function() {
+                // Always try direct fetch first (faster, no Worker needed if CORS allows)
+                log('🔄 جاري جلب من: ' + site.name + ' (' + site.url + ')', 'info');
+                fetchProductsDirect(site, data, function(success) {
+                    processed++;
+                    if (!success && workerConnected && settings.workerUrl) {
+                        // Direct failed, try Worker as fallback
+                        log('⚠️ الطلب المباشر فشل، جرب Worker...', 'warning');
+                        fetchProductsViaWorker(site, data, function() {
                             processed++;
                             checkAllProcessed(data, processed, activeSites.length);
                         });
-                    });
-                } else {
-                    // Direct fetch (may fail due to CORS)
-                    fetchProductsDirect(site, data, function() {
-                        processed++;
+                    } else {
                         checkAllProcessed(data, processed, activeSites.length);
-                    });
-                }
+                    }
+                });
+            });
+        }
+
+        function fetchProductsViaWorker(site, data, callback) {
+            const settings = DB.get('settings') || {};
+            fetch(settings.workerUrl + '/api/fetch-products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: site.url,
+                    token: site.token,
+                    format: site.format
+                })
+            }).then(function(response) {
+                if (!response.ok) throw new Error('Worker HTTP ' + response.status);
+                return response.json();
+            }).then(function(result) {
+                if (!result.success) throw new Error(result.error || 'Worker error');
+                processProducts(site, result.data, data);
+                if (callback) callback();
+            }).catch(function(err) {
+                log('❌ Worker فشل أيضاً: ' + err.message, 'error');
+                if (callback) callback();
             });
         }
 
         function fetchProductsDirect(site, data, callback) {
             const headers = {};
             if (site.token) headers['api-token'] = site.token;
+            console.log('Fetching from:', site.url, 'with token:', site.token ? 'yes' : 'no');
             fetch(site.url, { headers: headers }).then(function(response) {
+                console.log('Response status:', response.status);
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 return response.json();
             }).then(function(responseData) {
+                console.log('Response data type:', typeof responseData, 'isArray:', Array.isArray(responseData));
+                if (Array.isArray(responseData)) {
+                    console.log('Products count:', responseData.length);
+                }
                 processProducts(site, responseData, data);
-                if (callback) callback();
+                if (callback) callback(true);
             }).catch(function(err) {
+                console.error('Fetch error:', err.message);
                 log('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
                 showAlert('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
-                if (callback) callback();
+                if (callback) callback(false);
             });
         }
 
@@ -1059,7 +1075,8 @@
         }
 
         function checkAllProcessed(data, processed, total) {
-            if (processed === total) {
+            console.log('Processed:', processed, 'of', total);
+            if (processed >= total) {
                 setData(data);
                 const totalProducts = Object.values(data.products).flat().length;
                 const totalProductsEl = document.getElementById('totalProducts');
@@ -1175,6 +1192,38 @@
         }
 
         // Telegram
+        function testBotConnection() {
+            const botTokenInput = document.getElementById('botToken');
+            if (!botTokenInput) return;
+            const botToken = botTokenInput.value.trim();
+            if (!botToken) { showAlert('❌ الرجاء إدخال Bot Token أولاً'); return; }
+
+            const resultDiv = document.getElementById('botTestResult');
+            if (resultDiv) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<div class="loading-spinner" style="display:inline-block;vertical-align:middle;margin-left:10px;"></div> جاري التحقق...';
+            }
+
+            fetch('https://api.telegram.org/bot' + botToken + '/getMe')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.ok) {
+                        if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--success)">✅ البوت متصل! الاسم: @' + data.result.username + '</span>';
+                        log('✅ اختبار البوت ناجح: @' + data.result.username, 'success');
+                    } else {
+                        if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ فشل: ' + (data.description || 'Token غير صالح') + '</span>';
+                        log('❌ فشل اختبار البوت', 'error');
+                    }
+                })
+                .catch(function(err) {
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ خطأ: ' + err.message + '</span>';
+                    log('❌ خطأ في اختبار البوت: ' + err.message, 'error');
+                });
+        }
+
         function saveBotConfig() {
             const botToken = document.getElementById('botToken');
             const signature = document.getElementById('signature');
@@ -1273,6 +1322,7 @@
         }
 
         function saveTelegramUser() {
+            console.log('saveTelegramUser called!');
             const telegram = DB.get('telegram') || { users: [] };
             const editUserId = document.getElementById('editUserId');
             if (!editUserId) return;
@@ -1554,6 +1604,9 @@
             const btnSaveBot = document.getElementById('btnSaveBot');
             if (btnSaveBot) btnSaveBot.addEventListener('click', saveBotConfig);
 
+            const btnTestBot = document.getElementById('btnTestBot');
+            if (btnTestBot) btnTestBot.addEventListener('click', testBotConnection);
+
             const btnAddUser = document.getElementById('btnAddUser');
             if (btnAddUser) btnAddUser.addEventListener('click', addTelegramUser);
 
@@ -1575,10 +1628,11 @@
             const btnSaveUser = document.getElementById('btnSaveUser');
             if (btnSaveUser) btnSaveUser.addEventListener('click', saveTelegramUser);
 
-            // Notif items click
+            // Notif items click - only toggle when clicking the item background, not the checkbox itself
             document.querySelectorAll('.notif-item').forEach(function(item) {
                 item.addEventListener('click', function(e) {
-                    if (e.target.tagName === 'INPUT') return;
+                    // Don't toggle if clicking directly on the checkbox or label
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL') return;
                     const cb = this.querySelector('input[type="checkbox"]');
                     if (cb) { cb.checked = !cb.checked; updateNotifItems(); }
                 });
