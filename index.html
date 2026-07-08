@@ -571,6 +571,11 @@
                 DB.set('settings', { interval: 1, theme: 'dark', workerUrl: '' });
             }
             if (!DB.get('logs')) DB.set('logs', []);
+            // Restore worker connection state from localStorage
+            const savedWorkerConnected = DB.get('workerConnected');
+            if (savedWorkerConnected !== null) {
+                workerConnected = savedWorkerConnected;
+            }
         }
 
         function toggleTheme() {
@@ -735,6 +740,7 @@
             }).then(function(response) {
                 if (response.ok) {
                     workerConnected = true;
+                    DB.set('workerConnected', true);
                     if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--success)">✅ الاتصال ناجح!</span>';
                     log('✅ اختبار الـ Worker ناجح', 'success');
                     updateWorkerStatus(); updateStatus();
@@ -745,10 +751,12 @@
                     }).then(function(response2) {
                         if (response2.ok) {
                             workerConnected = true;
+                            DB.set('workerConnected', true);
                             if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--success)">✅ الاتصال ناجح! (عبر /api/status)</span>';
                             log('✅ اختبار الـ Worker ناجح', 'success');
                         } else {
                             workerConnected = false;
+                            DB.set('workerConnected', false);
                             if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ فشل: HTTP ' + response2.status + '<br><small>أضف endpoint /api/status في الـ Worker</small></span>';
                             log('❌ فشل اختبار الـ Worker: HTTP ' + response2.status, 'error');
                         }
@@ -757,6 +765,7 @@
                 }
             }).catch(function(err) {
                 workerConnected = false;
+                DB.set('workerConnected', false);
                 if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ خطأ: ' + err.message + '<br><small>تأكد من الرابط ومن أن الـ Worker شغال</small></span>';
                 log('❌ خطأ في الاتصال: ' + err.message, 'error');
                 updateWorkerStatus(); updateStatus();
@@ -965,55 +974,99 @@
         // Products
         function fetchAllProducts() {
             const data = getData();
+            const settings = DB.get('settings') || {};
             const activeSites = data.sites.filter(function(s) { return s.active; });
             if (activeSites.length === 0) { showAlert('❌ لا توجد مواقع مفعلة'); return; }
             log('🔄 جاري جلب المنتجات...', 'info');
             let processed = 0;
             activeSites.forEach(function(site) {
-                const headers = {};
-                if (site.token) headers['api-token'] = site.token;
-                fetch(site.url, { headers: headers }).then(function(response) {
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    return response.json();
-                }).then(function(responseData) {
-                    let products = [];
-                    if (site.format === 'sahl') {
-                        products = Array.isArray(responseData) ? responseData : (responseData.data || responseData.products || []);
-                    } else {
-                        products = Array.isArray(responseData) ? responseData : [];
-                    }
-                    const parsed = products.map(function(p) {
-                        return {
-                            id: p.id || p.product_id || p._id || Math.random().toString(36),
-                            name: p.name || p.title || p.product_name || 'منتج غير معروف',
-                            price: parseFloat(p.price) || 0,
-                            basePrice: parseFloat(p.base_price) || parseFloat(p.price) || 0,
-                            available: p.available !== false && p.in_stock !== false && p.status !== 'out_of_stock',
-                            category: p.category_name || p.category || p.type || 'عام',
-                            params: p.params || p.options || [],
-                            qtyMin: (p.qty_values && p.qty_values.min) || p.min_quantity || 1,
-                            qtyMax: (p.qty_values && p.qty_values.max) || p.max_quantity || 1,
-                            productType: p.product_type || p.type || 'amount',
-                            parentId: p.parent_id || 0
-                        };
+                // ✅ Use Worker proxy if connected, otherwise try direct fetch
+                if (workerConnected && settings.workerUrl) {
+                    fetch(settings.workerUrl + '/api/fetch-products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: site.url,
+                            token: site.token,
+                            format: site.format
+                        })
+                    }).then(function(response) {
+                        if (!response.ok) throw new Error('Worker HTTP ' + response.status);
+                        return response.json();
+                    }).then(function(result) {
+                        if (!result.success) throw new Error(result.error || 'Worker error');
+                        processProducts(site, result.data, data);
+                        processed++;
+                        checkAllProcessed(data, processed, activeSites.length);
+                    }).catch(function(err) {
+                        log('❌ Worker فشل في ' + site.name + ': ' + err.message + '، جرب الطلب المباشر...', 'warning');
+                        // Fallback to direct fetch
+                        fetchProductsDirect(site, data, function() {
+                            processed++;
+                            checkAllProcessed(data, processed, activeSites.length);
+                        });
                     });
-                    data.products[site.id] = parsed;
-                    log('✅ ' + site.name + ': ' + parsed.length + ' منتج', 'success');
-                    processed++;
-                    if (processed === activeSites.length) {
-                        setData(data);
-                        const totalProducts = Object.values(data.products).flat().length;
-                        const totalProductsEl = document.getElementById('totalProducts');
-                        if (totalProductsEl) totalProductsEl.textContent = totalProducts;
-                        showAlert('✅ تم جلب ' + totalProducts + ' منتج', 'success');
-                        if (!document.getElementById('products').classList.contains('hidden')) loadProducts();
-                    }
-                }).catch(function(err) {
-                    log('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
-                    showAlert('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
-                    processed++;
-                });
+                } else {
+                    // Direct fetch (may fail due to CORS)
+                    fetchProductsDirect(site, data, function() {
+                        processed++;
+                        checkAllProcessed(data, processed, activeSites.length);
+                    });
+                }
             });
+        }
+
+        function fetchProductsDirect(site, data, callback) {
+            const headers = {};
+            if (site.token) headers['api-token'] = site.token;
+            fetch(site.url, { headers: headers }).then(function(response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.json();
+            }).then(function(responseData) {
+                processProducts(site, responseData, data);
+                if (callback) callback();
+            }).catch(function(err) {
+                log('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
+                showAlert('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
+                if (callback) callback();
+            });
+        }
+
+        function processProducts(site, responseData, data) {
+            let products = [];
+            if (site.format === 'sahl') {
+                products = Array.isArray(responseData) ? responseData : (responseData.data || responseData.products || []);
+            } else {
+                products = Array.isArray(responseData) ? responseData : [];
+            }
+            const parsed = products.map(function(p) {
+                return {
+                    id: p.id || p.product_id || p._id || Math.random().toString(36),
+                    name: p.name || p.title || p.product_name || 'منتج غير معروف',
+                    price: parseFloat(p.price) || 0,
+                    basePrice: parseFloat(p.base_price) || parseFloat(p.price) || 0,
+                    available: p.available !== false && p.in_stock !== false && p.status !== 'out_of_stock',
+                    category: p.category_name || p.category || p.type || 'عام',
+                    params: p.params || p.options || [],
+                    qtyMin: (p.qty_values && p.qty_values.min) || p.min_quantity || 1,
+                    qtyMax: (p.qty_values && p.qty_values.max) || p.max_quantity || 1,
+                    productType: p.product_type || p.type || 'amount',
+                    parentId: p.parent_id || 0
+                };
+            });
+            data.products[site.id] = parsed;
+            log('✅ ' + site.name + ': ' + parsed.length + ' منتج', 'success');
+        }
+
+        function checkAllProcessed(data, processed, total) {
+            if (processed === total) {
+                setData(data);
+                const totalProducts = Object.values(data.products).flat().length;
+                const totalProductsEl = document.getElementById('totalProducts');
+                if (totalProductsEl) totalProductsEl.textContent = totalProducts;
+                showAlert('✅ تم جلب ' + totalProducts + ' منتج', 'success');
+                if (!document.getElementById('products').classList.contains('hidden')) loadProducts();
+            }
         }
 
         function loadProducts() {
@@ -1558,6 +1611,12 @@
             updateWorkerStatus(); updateStatus(); loadSites();
             log('🚀 تم التشغيل - v6.0', 'success');
             if (data.monitorActive) startMonitorLoop();
+            // ✅ Auto-test Worker connection on page load if URL exists
+            if (settings.workerUrl) {
+                setTimeout(function() {
+                    testWorkerConnection();
+                }, 1000);
+            }
         };
     </script>
 </body>
