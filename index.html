@@ -6,977 +6,183 @@
     <title>1Click Pay - مراقبة الأسعار الذكية</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root {
-            --primary: #00d4ff;
-            --secondary: #7b2ff7;
-            --success: #00b894;
-            --danger: #e17055;
-            --warning: #fdcb6e;
-            --info: #74b9ff;
-            --bg-dark: #0a0e27;
-            --bg-card: rgba(255,255,255,0.05);
-            --border: rgba(255,255,255,0.1);
-            --text: #fff;
-            --text-muted: #a0a0a0;
-            --shadow: 0 8px 32px rgba(0,0,0,0.3);
+            --primary: #00d4ff; --secondary: #7b2ff7; --success: #00b894;
+            --danger: #e17055; --warning: #fdcb6e; --bg-dark: #0a0e27;
+            --bg-card: rgba(255,255,255,0.05); --border: rgba(255,255,255,0.1);
+            --text: #fff; --text-muted: #a0a0a0;
         }
-
         [data-theme="light"] {
-            --bg-dark: #f0f4f8;
-            --bg-card: rgba(255,255,255,0.8);
-            --border: rgba(0,0,0,0.1);
-            --text: #1a1a2e;
-            --text-muted: #636e72;
-            --shadow: 0 8px 32px rgba(0,0,0,0.1);
+            --bg-dark: #f0f4f8; --bg-card: rgba(255,255,255,0.9);
+            --border: rgba(0,0,0,0.1); --text: #1a1a2e; --text-muted: #636e72;
         }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, var(--bg-dark) 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            color: var(--text);
-            transition: all 0.3s ease;
+            min-height: 100vh; color: var(--text); transition: all 0.3s ease;
         }
-
         [data-theme="light"] body {
             background: linear-gradient(135deg, #f0f4f8 0%, #e8ecf1 50%, #dfe6e9 100%);
         }
-
         .sidebar {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 280px;
-            height: 100vh;
-            background: rgba(10, 14, 39, 0.95);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--border);
-            padding: 20px 0;
-            z-index: 1000;
-            overflow-y: auto;
-            transition: all 0.3s ease;
+            position: fixed; right: 0; top: 0; width: 280px; height: 100vh;
+            background: rgba(10, 14, 39, 0.95); backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border); padding: 20px 0; z-index: 1000; overflow-y: auto;
         }
-
-        [data-theme="light"] .sidebar {
-            background: rgba(255, 255, 255, 0.95);
-        }
-
-        .sidebar-logo {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
-
+        [data-theme="light"] .sidebar { background: rgba(255, 255, 255, 0.95); }
+        .sidebar-logo { text-align: center; padding: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
         .sidebar-logo h1 {
             font-size: 1.5em;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-
-        .sidebar-logo p {
-            font-size: 0.8em;
-            color: var(--text-muted);
-            margin-top: 5px;
-        }
-
+        .sidebar-logo p { font-size: 0.8em; color: var(--text-muted); margin-top: 5px; }
         .theme-toggle {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2em;
-            transition: all 0.3s;
-            z-index: 1001;
+            position: absolute; top: 20px; left: 20px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 50%; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.2em; z-index: 1001;
         }
-
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
-        }
-
         .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 24px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-right: 3px solid transparent;
-            margin: 4px 0;
-            color: var(--text);
-            user-select: none;
+            display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+            cursor: pointer; transition: all 0.3s; border-right: 3px solid transparent;
+            margin: 4px 0; color: var(--text);
         }
-
-        .nav-item:hover {
-            background: rgba(0, 212, 255, 0.1);
-            border-right-color: var(--primary);
-        }
-
-        .nav-item.active {
-            background: rgba(0, 212, 255, 0.15);
-            border-right-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .nav-item i {
-            font-size: 1.3em;
-            width: 30px;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .nav-item span {
-            font-weight: 500;
-            pointer-events: none;
-        }
-
+        .nav-item:hover { background: rgba(0, 212, 255, 0.1); border-right-color: var(--primary); }
+        .nav-item.active { background: rgba(0, 212, 255, 0.15); border-right-color: var(--primary); color: var(--primary); }
         .status-panel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            padding: 15px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
+            position: absolute; bottom: 20px; left: 20px; right: 20px; padding: 15px;
+            background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border);
         }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            font-size: 0.85em;
-            color: var(--text);
-        }
-
-        .status-item:last-child { margin-bottom: 0; }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-            flex-shrink: 0;
-        }
-
+        .status-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85em; color: var(--text); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; animation: pulse 2s infinite; }
         .status-dot.active { background: var(--success); }
         .status-dot.inactive { background: var(--danger); animation: none; }
-        .status-dot.pending { background: var(--warning); }
-
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-        .main-content {
-            margin-right: 280px;
-            padding: 30px;
-            min-height: 100vh;
-        }
-
-        .header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header-bar h2 {
-            font-size: 1.8em;
-            color: var(--primary);
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
+        .main-content { margin-right: 280px; padding: 30px; min-height: 100vh; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .header-bar h2 { font-size: 1.8em; color: var(--primary); }
+        .alert { padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; display: none; align-items: center; gap: 12px; }
         .alert-error { background: rgba(225,112,85,0.15); border: 1px solid rgba(225,112,85,0.3); color: #fab1a0; }
         .alert-success { background: rgba(0,184,148,0.15); border: 1px solid rgba(0,184,148,0.3); color: #55efc4; }
-        .alert-warning { background: rgba(253,203,110,0.15); border: 1px solid rgba(253,203,110,0.3); color: #ffeaa7; }
-
-        [data-theme="light"] .alert-error { background: rgba(225,112,85,0.1); color: #d63031; }
-        [data-theme="light"] .alert-success { background: rgba(0,184,148,0.1); color: #00b894; }
-        [data-theme="light"] .alert-warning { background: rgba(253,203,110,0.1); color: #fdcb6e; }
-
-        .section {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 1px solid var(--border);
-            animation: fadeIn 0.5s ease;
-            box-shadow: var(--shadow);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .section h3 {
-            color: var(--primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            padding: 25px;
-            border-radius: 16px;
-            text-align: center;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.1);
-        }
-
-        .stat-card h3 {
-            font-size: 2.2em;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .stat-card p {
-            color: var(--text-muted);
-            font-size: 0.9em;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 10px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 14px 18px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: rgba(0,0,0,0.3);
-            color: var(--text);
-            font-size: 1em;
-            transition: all 0.3s;
-        }
-
-        [data-theme="light"] .form-group input,
-        [data-theme="light"] .form-group select,
-        [data-theme="light"] .form-group textarea {
-            background: rgba(255,255,255,0.8);
-            color: #1a1a2e;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
-        }
-
-        .form-group small {
-            color: var(--warning);
-            display: block;
-            margin-top: 6px;
-            font-size: 0.85em;
-        }
-
-        .btn {
-            padding: 12px 28px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin: 5px;
-            position: relative;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success), #00cec9);
-            color: #fff;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger), #d63031);
-            color: #fff;
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, var(--warning), #e17055);
-            color: #000;
-        }
-
-        .btn-info {
-            background: linear-gradient(135deg, #74b9ff, #0984e3);
-            color: #fff;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .site-card {
-            background: rgba(0,0,0,0.2);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-right: 4px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            transition: all 0.3s;
-        }
-
-        [data-theme="light"] .site-card {
-            background: rgba(255,255,255,0.6);
-        }
-
-        .site-card:hover {
-            background: rgba(0,0,0,0.3);
-            transform: translateX(-5px);
-        }
-
-        [data-theme="light"] .site-card:hover {
-            background: rgba(255,255,255,0.8);
-        }
-
-        .site-card.inactive {
-            border-right-color: var(--danger);
-            opacity: 0.7;
-        }
-
-        .site-info h4 {
-            color: var(--primary);
-            margin-bottom: 6px;
-            font-size: 1.1em;
-        }
-
-        .site-info p {
-            color: var(--text-muted);
-            font-size: 0.85em;
-        }
-
-        .site-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .site-actions .btn {
-            padding: 8px 16px;
-            font-size: 0.8em;
-        }
-
-        .products-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .products-table th, .products-table td {
-            padding: 14px;
-            text-align: right;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .products-table th {
-            background: rgba(0,0,0,0.3);
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        [data-theme="light"] .products-table th {
-            background: rgba(0,0,0,0.05);
-        }
-
-        .products-table tr:hover {
-            background: rgba(255,255,255,0.03);
-        }
-
+        .section { background: var(--bg-card); border-radius: 20px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .section h3 { color: var(--primary); margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); padding: 25px; border-radius: 16px; text-align: center; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+        .stat-card h3 { font-size: 2.2em; color: var(--primary); margin-bottom: 8px; }
+        .stat-card p { color: var(--text-muted); font-size: 0.9em; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 10px; color: var(--text-muted); font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; background: rgba(0,0,0,0.3); color: var(--text); font-size: 1em; }
+        [data-theme="light"] .form-group input, [data-theme="light"] .form-group select { background: rgba(255,255,255,0.8); color: #1a1a2e; }
+        .form-group small { color: var(--warning); display: block; margin-top: 6px; font-size: 0.85em; }
+        .btn { padding: 12px 28px; border: none; border-radius: 12px; cursor: pointer; font-size: 0.95em; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; margin: 5px; transition: all 0.3s; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; }
+        .btn-success { background: linear-gradient(135deg, var(--success), #00cec9); color: #fff; }
+        .btn-danger { background: linear-gradient(135deg, var(--danger), #d63031); color: #fff; }
+        .btn-warning { background: linear-gradient(135deg, var(--warning), #e17055); color: #000; }
+        .btn-info { background: linear-gradient(135deg, #74b9ff, #0984e3); color: #fff; }
+        .site-card { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; margin-bottom: 15px; border-right: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        [data-theme="light"] .site-card { background: rgba(255,255,255,0.6); }
+        .site-card.inactive { border-right-color: var(--danger); opacity: 0.7; }
+        .site-info h4 { color: var(--primary); margin-bottom: 6px; }
+        .site-info p { color: var(--text-muted); font-size: 0.85em; }
+        .site-actions { display: flex; gap: 8px; }
+        .site-actions .btn { padding: 8px 16px; font-size: 0.8em; }
+        .products-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .products-table th, .products-table td { padding: 14px; text-align: right; border-bottom: 1px solid var(--border); color: var(--text); }
+        .products-table th { background: rgba(0,0,0,0.3); color: var(--primary); font-weight: 600; }
+        [data-theme="light"] .products-table th { background: rgba(0,0,0,0.05); }
         .price-up { color: var(--success); }
         .price-down { color: var(--danger); }
-        .best-price { background: rgba(0,184,148,0.1) !important; }
-
-        .comparison-container {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .comparison-product {
-            background: var(--bg-card);
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
-
-        .comparison-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .comparison-header h4 {
-            color: var(--primary);
-            font-size: 1.3em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .category-badge {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.85em;
-        }
-
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .comparison-table th {
-            text-align: right;
-            padding: 12px;
-            color: var(--primary);
-            font-weight: 600;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .comparison-table td {
-            padding: 15px 12px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .comparison-table tr:hover {
-            background: rgba(0, 212, 255, 0.05);
-        }
-
-        .site-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            font-weight: 600;
-        }
-
-        .site-badge .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .price-tag {
-            font-size: 1.2em;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-        }
-
+        .comparison-container { display: flex; flex-direction: column; gap: 25px; }
+        .comparison-product { background: var(--bg-card); border-radius: 20px; padding: 25px; border: 1px solid var(--border); }
+        .comparison-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .comparison-header h4 { color: var(--primary); font-size: 1.3em; }
+        .category-badge { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85em; }
+        .comparison-table { width: 100%; border-collapse: collapse; }
+        .comparison-table th { text-align: right; padding: 12px; color: var(--primary); font-weight: 600; border-bottom: 2px solid var(--border); }
+        .comparison-table td { padding: 15px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+        .site-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; font-size: 0.9em; font-weight: 600; }
+        .site-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .price-tag { font-size: 1.2em; font-weight: bold; font-family: monospace; }
         .price-tag.best { color: var(--success); }
-        .price-tag.normal { color: var(--text); }
         .price-tag.high { color: var(--danger); }
-
-        .savings-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .savings-badge.positive {
-            background: rgba(0, 184, 148, 0.2);
-            color: var(--success);
-        }
-
-        .savings-badge.negative {
-            background: rgba(225, 112, 85, 0.2);
-            color: var(--danger);
-        }
-
-        .winner-badge {
-            background: linear-gradient(135deg, var(--success), #00cec9);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .comparison-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
-        }
-
-        .summary-card {
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        [data-theme="light"] .summary-card {
-            background: rgba(255,255,255,0.6);
-        }
-
-        .summary-card .label {
-            font-size: 0.85em;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-        }
-
-        .summary-card .value {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .currency-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .currency-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 2px solid var(--border);
-            background: var(--bg-card);
-            color: var(--text);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .currency-btn.active {
-            border-color: var(--primary);
-            background: rgba(0, 212, 255, 0.1);
-            color: var(--primary);
-        }
-
-        .currency-btn:hover {
-            border-color: var(--primary);
-        }
-
-        .telegram-user {
-            background: rgba(0,0,0,0.2);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border);
-            transition: all 0.3s;
-        }
-
-        [data-theme="light"] .telegram-user {
-            background: rgba(255,255,255,0.6);
-        }
-
-        .telegram-user:hover {
-            border-color: var(--primary);
-        }
-
-        .telegram-user-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .telegram-user-info h4 {
-            color: var(--primary);
-        }
-
-        .telegram-user-info p {
-            color: var(--text-muted);
-            font-size: 0.85em;
-            margin-top: 4px;
-        }
-
-        .notification-types {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        .notif-type {
-            background: rgba(0,0,0,0.2);
-            padding: 12px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid transparent;
-        }
-
-        [data-theme="light"] .notif-type {
-            background: rgba(255,255,255,0.6);
-        }
-
-        .notif-type:hover {
-            border-color: rgba(0,212,255,0.3);
-        }
-
-        .notif-type input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary);
-            cursor: pointer;
-        }
-
-        .notif-type label {
-            flex: 1;
-            cursor: pointer;
-            font-size: 0.9em;
-            color: var(--text);
-        }
-
-        .logs-container {
-            max-height: 400px;
-            overflow-y: auto;
-            background: rgba(0,0,0,0.3);
-            border-radius: 12px;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-        }
-
-        [data-theme="light"] .logs-container {
-            background: rgba(0,0,0,0.05);
-        }
-
-        .log-entry {
-            margin-bottom: 8px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .log-time {
-            color: var(--text-muted);
-            font-size: 0.85em;
-            min-width: 80px;
-        }
-
-        .log-type {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75em;
-            font-weight: bold;
-        }
-
+        .winner-badge { background: linear-gradient(135deg, var(--success), #00cec9); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        .comparison-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+        .summary-card { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; text-align: center; }
+        [data-theme="light"] .summary-card { background: rgba(255,255,255,0.6); }
+        .summary-card .label { font-size: 0.85em; color: var(--text-muted); margin-bottom: 5px; }
+        .summary-card .value { font-size: 1.3em; font-weight: bold; color: var(--primary); }
+        .currency-selector { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .currency-btn { padding: 8px 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; font-weight: 600; }
+        .currency-btn.active { border-color: var(--primary); background: rgba(0, 212, 255, 0.1); color: var(--primary); }
+        .telegram-user { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
+        [data-theme="light"] .telegram-user { background: rgba(255,255,255,0.6); }
+        .telegram-user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .telegram-user-info h4 { color: var(--primary); }
+        .telegram-user-info p { color: var(--text-muted); font-size: 0.85em; }
+        .notification-types { display: flex; flex-wrap: wrap; gap: 8px; }
+        .notif-tag { padding: 4px 10px; border-radius: 8px; font-size: 0.85em; }
+        .notif-tag.success { color: var(--success); background: rgba(0,184,148,0.1); }
+        .notif-tag.danger { color: var(--danger); background: rgba(225,112,85,0.1); }
+        .notif-tag.warning { color: var(--warning); background: rgba(253,203,110,0.1); }
+        .logs-container { max-height: 400px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; font-family: monospace; font-size: 0.85em; }
+        [data-theme="light"] .logs-container { background: rgba(0,0,0,0.05); }
+        .log-entry { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
+        .log-time { color: var(--text-muted); font-size: 0.85em; min-width: 80px; }
+        .log-type { padding: 2px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; }
         .log-type.info { background: rgba(116,185,255,0.2); color: #74b9ff; }
         .log-type.success { background: rgba(0,184,148,0.2); color: #00b894; }
         .log-type.warning { background: rgba(253,203,110,0.2); color: #fdcb6e; }
         .log-type.error { background: rgba(225,112,85,0.2); color: #e17055; }
-
-        [data-theme="light"] .log-type.info { color: #0984e3; }
-        [data-theme="light"] .log-type.success { color: #00b894; }
-        [data-theme="light"] .log-type.warning { color: #fdcb6e; }
-        [data-theme="light"] .log-type.error { color: #d63031; }
-
         .log-message { flex: 1; color: var(--text); }
-
-        .custom-interval {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .custom-interval input[type="number"] {
-            width: 100px;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: rgba(0,0,0,0.3);
-            color: var(--text);
-            font-size: 1em;
-            text-align: center;
-        }
-
-        [data-theme="light"] .custom-interval input[type="number"] {
-            background: rgba(255,255,255,0.8);
-            color: #1a1a2e;
-        }
-
-        .custom-interval label {
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
+        .custom-interval { display: flex; align-items: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .custom-interval input[type="number"] { width: 100px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: rgba(0,0,0,0.3); color: var(--text); font-size: 1em; text-align: center; }
+        [data-theme="light"] .custom-interval input[type="number"] { background: rgba(255,255,255,0.8); color: #1a1a2e; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
         .modal.active { display: flex; }
-
-        .modal-content {
-            background: #0a0e27;
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            border: 1px solid var(--border);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        [data-theme="light"] .modal-content {
-            background: #fff;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s linear infinite;
-        }
-
+        .modal-content { background: #0a0e27; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+        [data-theme="light"] .modal-content { background: #fff; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .empty-state {
-            text-align: center;
-            padding: 50px;
-            color: var(--text-muted);
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                border-left: none;
-                border-bottom: 1px solid var(--border);
-            }
-
-            .main-content {
-                margin-right: 0;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .comparison-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.2);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary);
-        }
-
+        .empty-state { text-align: center; padding: 50px; color: var(--text-muted); }
         .hidden { display: none !important; }
-
-        .worker-status-box {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .worker-status-box .status-icon {
-            font-size: 2em;
-        }
-
-        .worker-status-box .status-details h4 {
-            color: var(--primary);
-            margin-bottom: 5px;
-        }
-
-        .worker-status-box .status-details p {
-            color: var(--text-muted);
-            font-size: 0.9em;
-        }
-
-        .worker-config {
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-
-        [data-theme="light"] .worker-config {
-            background: rgba(255,255,255,0.6);
-        }
-
-        .worker-config h4 {
-            color: var(--primary);
-            margin-bottom: 15px;
-        }
-
-        .worker-connected {
-            border-color: var(--success) !important;
-            background: rgba(0, 184, 148, 0.1) !important;
+        .worker-config { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        [data-theme="light"] .worker-config { background: rgba(255,255,255,0.6); }
+        .worker-connected { border-color: var(--success) !important; background: rgba(0, 184, 148, 0.1) !important; }
+        .worker-status-box { background: var(--bg-card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
+        .worker-status-box .status-icon { font-size: 2em; }
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-right: 0; }
+            .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
 <base target="_blank">
 </head>
 <body>
     <div class="sidebar">
-        <div class="theme-toggle" id="themeToggle" title="تبديل الوضع">
-            <span id="themeIcon">🌙</span>
-        </div>
-
+        <div class="theme-toggle" id="themeToggle">🌙</div>
         <div class="sidebar-logo">
-            <h1>🚀 1Click Pay</h1>
+            <h1>1Click Pay</h1>
             <p>مراقبة الأسعار الذكية</p>
         </div>
-
         <nav>
-            <div class="nav-item active" data-tab="dashboard">
-                <span>📊</span>
-                <span>لوحة التحكم</span>
-            </div>
-            <div class="nav-item" data-tab="sites">
-                <span>🌐</span>
-                <span>المواقع</span>
-            </div>
-            <div class="nav-item" data-tab="products">
-                <span>📦</span>
-                <span>المنتجات</span>
-            </div>
-            <div class="nav-item" data-tab="comparison">
-                <span>⚖️</span>
-                <span>المقارنة</span>
-            </div>
-            <div class="nav-item" data-tab="telegram">
-                <span>📱</span>
-                <span>تلجرام</span>
-            </div>
-            <div class="nav-item" data-tab="logs">
-                <span>📝</span>
-                <span>السجلات</span>
-            </div>
+            <div class="nav-item active" data-tab="dashboard">📊 لوحة التحكم</div>
+            <div class="nav-item" data-tab="sites">🌐 المواقع</div>
+            <div class="nav-item" data-tab="products">📦 المنتجات</div>
+            <div class="nav-item" data-tab="comparison">⚖️ المقارنة</div>
+            <div class="nav-item" data-tab="telegram">📱 تلجرام</div>
+            <div class="nav-item" data-tab="logs">📝 السجلات</div>
         </nav>
-
         <div class="status-panel">
             <div class="status-item">
                 <div class="status-dot active" id="systemStatusDot"></div>
-                <span id="systemStatusText">النظام جاهز</span>
+                <span>النظام جاهز</span>
             </div>
             <div class="status-item">
                 <div class="status-dot inactive" id="monitorStatusDot"></div>
@@ -992,6 +198,7 @@
     <div class="main-content">
         <div id="alertBox" class="alert"></div>
 
+        <!-- Dashboard -->
         <div id="dashboard" class="tab-content">
             <div class="header-bar">
                 <h2>📊 لوحة التحكم</h2>
@@ -1000,71 +207,52 @@
                     <button class="btn btn-danger" id="btnStop">⏹️ إيقاف</button>
                 </div>
             </div>
-
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h3 id="totalSites">0</h3>
-                    <p>المواقع المضافة</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="totalProducts">0</h3>
-                    <p>المنتجات المراقبة</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="priceChanges">0</h3>
-                    <p>تغييرات اليوم</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="lastCheck">--:--</h3>
-                    <p>آخر فحص</p>
-                </div>
+                <div class="stat-card"><h3 id="totalSites">0</h3><p>المواقع المضافة</p></div>
+                <div class="stat-card"><h3 id="totalProducts">0</h3><p>المنتجات المراقبة</p></div>
+                <div class="stat-card"><h3 id="priceChanges">0</h3><p>تغييرات اليوم</p></div>
+                <div class="stat-card"><h3 id="lastCheck">--:--</h3><p>آخر فحص</p></div>
             </div>
-
             <div class="section">
                 <h3>⚙️ إعدادات التشغيل</h3>
                 <div class="form-group">
                     <label>⏱️ فترة الفحص (دقائق)</label>
                     <div class="custom-interval">
-                        <input type="number" id="intervalInput" value="1" min="1" max="1440" placeholder="1">
+                        <input type="number" id="intervalInput" value="1" min="1" max="1440">
                         <label>دقيقة/دقائق</label>
                         <button class="btn btn-primary" id="btnSaveInterval">💾 حفظ</button>
                     </div>
                     <small>يمكنك تحديد أي عدد من الدقائق (1 - 1440)</small>
                 </div>
-                <div style="margin-top: 20px;">
-                    <button class="btn btn-primary" id="btnCheckNow">🔄 فحص فوري</button>
-                </div>
+                <button class="btn btn-primary" id="btnCheckNow">🔄 فحص فوري</button>
             </div>
-
             <div class="section">
                 <h3>🔗 إعدادات الـ Worker</h3>
                 <div class="worker-config" id="workerConfigBox">
-                    <h4>🔗 ربط الـ Worker</h4>
+                    <h4 style="color:var(--primary);margin-bottom:15px;">🔗 ربط الـ Worker</h4>
                     <div class="form-group">
                         <label>رابط الـ Worker URL</label>
-                        <input type="text" id="workerUrlInput" placeholder="https://your-worker.your-subdomain.workers.dev" value="">
+                        <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display:flex;gap:10px;">
                         <button class="btn btn-success" id="btnSaveWorker">💾 حفظ الرابط</button>
                         <button class="btn btn-info" id="btnTestWorker">🧪 اختبار الاتصال</button>
                     </div>
-                    <div id="workerTestResult" style="margin-top: 15px; display: none;"></div>
+                    <div id="workerTestResult" style="margin-top:15px;display:none;"></div>
                 </div>
                 <div class="worker-status-box" id="workerStatusBox">
                     <div class="status-icon">🔗</div>
-                    <div class="status-details">
-                        <h4>الـ Worker</h4>
-                        <p id="workerStatusDesc">غير مربط - أدخل رابط الـ Worker أعلاه</p>
+                    <div>
+                        <h4 style="color:var(--primary);margin-bottom:5px;">الـ Worker</h4>
+                        <p id="workerStatusDesc" style="color:var(--text-muted);font-size:0.9em;">غير مربط - أدخل رابط الـ Worker أعلاه</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Sites -->
         <div id="sites" class="tab-content hidden">
-            <div class="header-bar">
-                <h2>🌐 المواقع</h2>
-            </div>
-
+            <div class="header-bar"><h2>🌐 المواقع</h2></div>
             <div class="section">
                 <h3>➕ إضافة موقع جديد</h3>
                 <div class="form-group">
@@ -1076,25 +264,25 @@
                     <input type="text" id="siteUrl" placeholder="https://api.site.com/client/api/products" value="https://api.sahl-cash.com/client/api/products">
                 </div>
                 <div class="form-group">
-                    <label>API Token (توكن المصادقة)</label>
-                    <input type="text" id="siteToken" placeholder="توكن الـ API - يُرسل في الهيدر كـ api-token">
+                    <label>API Token</label>
+                    <input type="text" id="siteToken" placeholder="توكن الـ API">
                 </div>
                 <div class="form-group">
                     <label>تنسيق الاستجابة</label>
                     <select id="siteFormat">
                         <option value="sahl">Sahl-Cash (افتراضي)</option>
-                        <option value="custom">تنسيق مخصص (مصفوفة مباشرة)</option>
+                        <option value="custom">تنسيق مخصص</option>
                     </select>
                 </div>
                 <button class="btn btn-success" id="btnAddSite">💾 حفظ الموقع</button>
             </div>
-
             <div class="section">
                 <h3>🌐 المواقع المضافة</h3>
                 <div id="sitesList"></div>
             </div>
         </div>
 
+        <!-- Products -->
         <div id="products" class="tab-content hidden">
             <div class="header-bar">
                 <h2>📦 المنتجات</h2>
@@ -1103,18 +291,11 @@
                     <button class="btn btn-warning" id="btnExportProducts">📥 تصدير CSV</button>
                 </div>
             </div>
-
             <div class="section">
-                <div style="overflow-x: auto;">
+                <div style="overflow-x:auto;">
                     <table class="products-table">
                         <thead>
-                            <tr>
-                                <th>المنتج</th>
-                                <th>الموقع</th>
-                                <th>السعر الحالي</th>
-                                <th>آخر تغيير</th>
-                                <th>الحالة</th>
-                            </tr>
+                            <tr><th>المنتج</th><th>الموقع</th><th>السعر الحالي</th><th>آخر تغيير</th><th>الحالة</th></tr>
                         </thead>
                         <tbody id="productsTable"></tbody>
                     </table>
@@ -1122,17 +303,14 @@
             </div>
         </div>
 
+        <!-- Comparison -->
         <div id="comparison" class="tab-content hidden">
-            <div class="header-bar">
-                <h2>⚖️ مقارنة الأسعار</h2>
-            </div>
-
+            <div class="header-bar"><h2>⚖️ مقارنة الأسعار</h2></div>
             <div class="section">
                 <div class="form-group">
                     <label>🔍 البحث عن منتج</label>
                     <input type="text" id="compareSearch" placeholder="اكتب اسم المنتج...">
                 </div>
-
                 <div class="form-group">
                     <label>💱 العملة المعروضة</label>
                     <div class="currency-selector">
@@ -1142,36 +320,33 @@
                         <button class="currency-btn" data-currency="EGP">💷 EGP</button>
                     </div>
                 </div>
-
                 <div class="comparison-container" id="comparisonContainer"></div>
             </div>
         </div>
 
+        <!-- Telegram -->
         <div id="telegram" class="tab-content hidden">
-            <div class="header-bar">
-                <h2>📱 إعداد تلجرام</h2>
-            </div>
-
+            <div class="header-bar"><h2>📱 إعداد تلجرام</h2></div>
             <div class="section">
                 <h3>🔑 إعدادات البوت</h3>
                 <div class="form-group">
                     <label>Bot Token (من @BotFather)</label>
-                    <input type="text" id="botToken" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                    <input type="text" id="botToken" placeholder="123456789:ABCdef...">
                 </div>
                 <div class="form-group">
                     <label>نص التوقيع</label>
-                    <input type="text" id="signature" value="🤖 1Click Pay Monitor" placeholder="توقيعك">
+                    <input type="text" id="signature" value="🤖 1Click Pay Monitor">
                 </div>
                 <button class="btn btn-primary" id="btnSaveBot">💾 حفظ إعدادات البوت</button>
             </div>
-
             <div class="section">
                 <h3>👤 إدارة المستخدمين</h3>
                 <div id="telegramUsers"></div>
-                <button class="btn btn-success" id="btnAddUser" style="margin-top: 15px;">➕ إضافة مستخدم</button>
+                <button class="btn btn-success" id="btnAddUser" style="margin-top:15px;">➕ إضافة مستخدم</button>
             </div>
         </div>
 
+        <!-- Logs -->
         <div id="logs" class="tab-content hidden">
             <div class="header-bar">
                 <h2>📝 السجلات</h2>
@@ -1180,22 +355,22 @@
                     <button class="btn btn-primary" id="btnExportLogs">📥 تصدير</button>
                 </div>
             </div>
-
             <div class="section">
                 <div class="logs-container" id="logsContainer">
                     <div class="log-entry">
                         <span class="log-time">--:--</span>
                         <span class="log-type info">INFO</span>
-                        <span class="log-message">مرحباً بك في 1Click Pay Monitor v4.3</span>
+                        <span class="log-message">مرحباً بك في 1Click Pay Monitor v5.0</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Edit Modal -->
     <div class="modal" id="editModal">
         <div class="modal-content">
-            <h3 style="color: var(--primary); margin-bottom: 20px;">✏️ تعديل موقع</h3>
+            <h3 style="color:var(--primary);margin-bottom:20px;">✏️ تعديل موقع</h3>
             <input type="hidden" id="editSiteId">
             <div class="form-group">
                 <label>اسم الموقع</label>
@@ -1209,16 +384,17 @@
                 <label>API Token</label>
                 <input type="text" id="editSiteToken">
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn" id="btnCancelEdit" style="background: #636e72;">إلغاء</button>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+                <button class="btn" id="btnCancelEdit" style="background:#636e72;">إلغاء</button>
                 <button class="btn btn-success" id="btnUpdateSite">حفظ</button>
             </div>
         </div>
     </div>
 
+    <!-- User Modal -->
     <div class="modal" id="userModal">
         <div class="modal-content">
-            <h3 style="color: var(--primary); margin-bottom: 20px;">➕ إضافة مستخدم تلجرام</h3>
+            <h3 style="color:var(--primary);margin-bottom:20px;">➕ إضافة مستخدم تلجرام</h3>
             <input type="hidden" id="editUserId">
             <div class="form-group">
                 <label>الاسم (للتعريف)</label>
@@ -1253,40 +429,29 @@
                     </div>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn" id="btnCancelUser" style="background: #636e72;">إلغاء</button>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+                <button class="btn" id="btnCancelUser" style="background:#636e72;">إلغاء</button>
                 <button class="btn btn-success" id="btnSaveUser">حفظ</button>
             </div>
         </div>
     </div>
 
     <script>
+
         const DB = {
             get(key) {
                 try {
                     const data = localStorage.getItem(`1click_${key}`);
                     return data ? JSON.parse(data) : null;
-                } catch (e) {
-                    console.error('DB get error:', e);
-                    return null;
-                }
+                } catch (e) { return null; }
             },
             set(key, value) {
-                try {
-                    localStorage.setItem(`1click_${key}`, JSON.stringify(value));
-                } catch (e) {
-                    console.error('DB set error:', e);
-                }
+                try { localStorage.setItem(`1click_${key}`, JSON.stringify(value)); }
+                catch (e) { console.error(e); }
             }
         };
 
-        const exchangeRates = {
-            USD: 1,
-            SAR: 3.75,
-            AED: 3.67,
-            EGP: 30.9
-        };
-
+        const exchangeRates = { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 };
         let currentCurrency = 'USD';
         let siteColors = {};
         let workerConnected = false;
@@ -1295,29 +460,18 @@
         function initData() {
             if (!DB.get('sites')) {
                 DB.set('sites', [{
-                    id: 1,
-                    name: 'سهل كاش',
+                    id: 1, name: 'سهل كاش',
                     url: 'https://api.sahl-cash.com/client/api/products',
-                    token: '',
-                    format: 'sahl',
-                    active: true
+                    token: '', format: 'sahl', active: true
                 }]);
             }
             if (!DB.get('products')) DB.set('products', {});
             if (!DB.get('history')) DB.set('history', []);
             if (!DB.get('telegram')) {
-                DB.set('telegram', {
-                    botToken: '',
-                    signature: '🤖 1Click Pay Monitor',
-                    users: []
-                });
+                DB.set('telegram', { botToken: '', signature: '🤖 1Click Pay Monitor', users: [] });
             }
             if (!DB.get('settings')) {
-                DB.set('settings', {
-                    interval: 1,
-                    theme: 'dark',
-                    workerUrl: ''
-                });
+                DB.set('settings', { interval: 1, theme: 'dark', workerUrl: '' });
             }
             if (!DB.get('logs')) DB.set('logs', []);
         }
@@ -1328,7 +482,6 @@
             document.documentElement.setAttribute('data-theme', next);
             const icon = document.getElementById('themeIcon');
             if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
-
             const settings = DB.get('settings') || {};
             settings.theme = next;
             DB.set('settings', settings);
@@ -1342,27 +495,27 @@
             if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀️';
         }
 
-        function showAlert(message, type = 'error', duration = 5000) {
+        function showAlert(message, type, duration) {
+            type = type || 'error';
+            duration = duration || 5000;
             const box = document.getElementById('alertBox');
             if (!box) return;
-            box.className = `alert alert-${type}`;
+            box.className = 'alert alert-' + type;
             box.innerHTML = message;
             box.style.display = 'flex';
             if (duration > 0) {
-                setTimeout(() => {
+                setTimeout(function() {
                     if (box) box.style.display = 'none';
                 }, duration);
             }
         }
 
         function showTab(tabName, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.add('hidden'); });
             const target = document.getElementById(tabName);
             if (target) target.classList.remove('hidden');
-
-            document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(function(t) { t.classList.remove('active'); });
             if (el) el.classList.add('active');
-
             if (tabName === 'sites') loadSites();
             if (tabName === 'products') loadProducts();
             if (tabName === 'comparison') loadComparison();
@@ -1370,24 +523,20 @@
             if (tabName === 'logs') loadLogs();
         }
 
-        function log(message, type = 'info') {
+        function log(message, type) {
+            type = type || 'info';
             const logs = DB.get('logs') || [];
             const now = new Date();
             const time = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-            const entry = { time, message, type };
+            const entry = { time: time, message: message, type: type };
             logs.unshift(entry);
             if (logs.length > 500) logs.pop();
             DB.set('logs', logs);
-
             const container = document.getElementById('logsContainer');
             if (container) {
                 const div = document.createElement('div');
                 div.className = 'log-entry';
-                div.innerHTML = `
-                    <span class="log-time">${time}</span>
-                    <span class="log-type ${type}">${type.toUpperCase()}</span>
-                    <span class="log-message">${message}</span>
-                `;
+                div.innerHTML = '<span class="log-time">' + time + '</span><span class="log-type ' + type + '">' + type.toUpperCase() + '</span><span class="log-message">' + message + '</span>';
                 container.insertBefore(div, container.firstChild);
             }
         }
@@ -1396,13 +545,9 @@
             const logs = DB.get('logs') || [];
             const container = document.getElementById('logsContainer');
             if (container) {
-                container.innerHTML = logs.map(l => `
-                    <div class="log-entry">
-                        <span class="log-time">${l.time}</span>
-                        <span class="log-type ${l.type}">${l.type.toUpperCase()}</span>
-                        <span class="log-message">${l.message}</span>
-                    </div>
-                `).join('');
+                container.innerHTML = logs.map(function(l) {
+                    return '<div class="log-entry"><span class="log-time">' + l.time + '</span><span class="log-type ' + l.type + '">' + l.type.toUpperCase() + '</span><span class="log-message">' + l.message + '</span></div>';
+                }).join('');
             }
         }
 
@@ -1412,26 +557,10 @@
             const monitorText = document.getElementById('monitorStatusText');
             const workerDot = document.getElementById('workerStatusDot');
             const workerText = document.getElementById('workerStatusText');
-
-            if (monitorDot) {
-                if (data.monitorActive) {
-                    monitorDot.className = 'status-dot active';
-                    if (monitorText) monitorText.textContent = 'المراقبة نشطة';
-                } else {
-                    monitorDot.className = 'status-dot inactive';
-                    if (monitorText) monitorText.textContent = 'المراقبة متوقفة';
-                }
-            }
-
-            if (workerDot) {
-                if (workerConnected) {
-                    workerDot.className = 'status-dot active';
-                    if (workerText) workerText.textContent = 'الـ Worker متصل';
-                } else {
-                    workerDot.className = 'status-dot inactive';
-                    if (workerText) workerText.textContent = 'الـ Worker غير متصل';
-                }
-            }
+            if (monitorDot) monitorDot.className = data.monitorActive ? 'status-dot active' : 'status-dot inactive';
+            if (monitorText) monitorText.textContent = data.monitorActive ? 'المراقبة نشطة' : 'المراقبة متوقفة';
+            if (workerDot) workerDot.className = workerConnected ? 'status-dot active' : 'status-dot inactive';
+            if (workerText) workerText.textContent = workerConnected ? 'الـ Worker متصل' : 'الـ Worker غير متصل';
         }
 
         function getData() {
@@ -1462,78 +591,50 @@
             return siteColors[siteId];
         }
 
-        // ========== WORKER FUNCTIONS ==========
+        // Worker Functions
         function saveWorkerUrl() {
             const urlInput = document.getElementById('workerUrlInput');
             if (!urlInput) return;
-
             const url = urlInput.value.trim();
-            if (!url) {
-                showAlert('❌ الرجاء إدخال رابط الـ Worker');
-                return;
-            }
-
-            try {
-                new URL(url);
-            } catch {
-                showAlert('❌ الرابط غير صالح');
-                return;
-            }
-
+            if (!url) { showAlert('❌ الرجاء إدخال رابط الـ Worker'); return; }
+            try { new URL(url); } catch(e) { showAlert('❌ الرابط غير صالح'); return; }
             const settings = DB.get('settings') || {};
             settings.workerUrl = url;
             DB.set('settings', settings);
-
             log('💾 تم حفظ رابط الـ Worker', 'success');
             showAlert('✅ تم حفظ رابط الـ Worker', 'success');
             updateWorkerStatus();
         }
 
-        async function testWorkerConnection() {
+        function testWorkerConnection() {
             const settings = DB.get('settings') || {};
             const workerUrl = settings.workerUrl;
-
-            if (!workerUrl) {
-                showAlert('❌ الرجاء حفظ رابط الـ Worker أولاً');
-                return;
-            }
-
+            if (!workerUrl) { showAlert('❌ الرجاء حفظ رابط الـ Worker أولاً'); return; }
             const resultDiv = document.getElementById('workerTestResult');
             if (resultDiv) {
                 resultDiv.style.display = 'block';
                 resultDiv.innerHTML = '<div class="loading-spinner" style="display:inline-block;vertical-align:middle;margin-left:10px;"></div> جاري الاختبار...';
             }
-
-            try {
-                const response = await fetch(`${workerUrl}/api/status`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
+            fetch(workerUrl + '/api/status', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(function(response) {
                 if (response.ok) {
-                    const data = await response.json();
                     workerConnected = true;
-                    if (resultDiv) {
-                        resultDiv.innerHTML = '<span style="color: var(--success)">✅ الاتصال ناجح! الـ Worker يعمل بشكل صحيح</span>';
-                    }
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--success)">✅ الاتصال ناجح!</span>';
                     log('✅ اختبار الـ Worker ناجح', 'success');
                 } else {
                     workerConnected = false;
-                    if (resultDiv) {
-                        resultDiv.innerHTML = `<span style="color: var(--danger)">❌ فشل الاتصال: HTTP ${response.status}</span>`;
-                    }
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ فشل: HTTP ' + response.status + '</span>';
                     log('❌ فشل اختبار الـ Worker', 'error');
                 }
-            } catch (err) {
+                updateWorkerStatus(); updateStatus();
+            }).catch(function(err) {
                 workerConnected = false;
-                if (resultDiv) {
-                    resultDiv.innerHTML = `<span style="color: var(--danger)">❌ خطأ في الاتصال: ${err.message}</span>`;
-                }
-                log(`❌ خطأ في الاتصال بالـ Worker: ${err.message}`, 'error');
-            }
-
-            updateWorkerStatus();
-            updateStatus();
+                if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ خطأ: ' + err.message + '</span>';
+                log('❌ خطأ في الاتصال: ' + err.message, 'error');
+                updateWorkerStatus(); updateStatus();
+            });
         }
 
         function updateWorkerStatus() {
@@ -1542,91 +643,69 @@
             const statusBox = document.getElementById('workerStatusBox');
             const statusDesc = document.getElementById('workerStatusDesc');
             const configBox = document.getElementById('workerConfigBox');
-
             if (statusBox && statusDesc) {
                 if (workerUrl) {
                     if (workerConnected) {
                         statusBox.classList.add('worker-connected');
-                        statusDesc.textContent = `متصل: ${workerUrl}`;
+                        statusDesc.textContent = 'متصل: ' + workerUrl;
                         if (configBox) configBox.classList.add('worker-connected');
                     } else {
                         statusBox.classList.remove('worker-connected');
-                        statusDesc.textContent = `غير متصل: ${workerUrl} - اضغط اختبار الاتصال`;
+                        statusDesc.textContent = 'غير متصل: ' + workerUrl;
                         if (configBox) configBox.classList.remove('worker-connected');
                     }
                 } else {
                     statusBox.classList.remove('worker-connected');
-                    statusDesc.textContent = 'غير مربط - أدخل رابط الـ Worker أعلاه';
+                    statusDesc.textContent = 'غير مربط - أدخل رابط الـ Worker';
                     if (configBox) configBox.classList.remove('worker-connected');
                 }
             }
         }
 
-        async function callWorker(endpoint, body = null) {
+        function callWorker(endpoint, body) {
             const settings = DB.get('settings') || {};
             const workerUrl = settings.workerUrl;
-
-            if (!workerUrl) {
-                showAlert('❌ لم يتم ربط الـ Worker', 'error');
-                return null;
-            }
-
-            try {
-                const options = {
-                    method: body ? 'POST' : 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                };
-                if (body) options.body = JSON.stringify(body);
-
-                const res = await fetch(`${workerUrl}${endpoint}`, options);
-
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-
-                return await res.json();
-            } catch (err) {
-                log(`❌ خطأ في الاتصال بالـ Worker: ${err.message}`, 'error');
-                workerConnected = false;
-                updateStatus();
-                return null;
-            }
+            if (!workerUrl) { showAlert('❌ لم يتم ربط الـ Worker'); return Promise.resolve(null); }
+            const options = {
+                method: body ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+            return fetch(workerUrl + endpoint, options).then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            }).catch(function(err) {
+                log('❌ خطأ في الـ Worker: ' + err.message, 'error');
+                workerConnected = false; updateStatus(); return null;
+            });
         }
 
-        // ========== SITES ==========
+        // Sites
         function loadSites() {
             const data = getData();
             const container = document.getElementById('sitesList');
             const totalSitesEl = document.getElementById('totalSites');
             if (totalSitesEl) totalSitesEl.textContent = data.sites.length;
-
             if (container) {
-                container.innerHTML = data.sites.map(site => `
-                    <div class="site-card ${site.active ? '' : 'inactive'}">
-                        <div class="site-info">
-                            <h4>${site.name} ${site.active ? '🟢' : '🔴'}</h4>
-                            <p>${site.url}</p>
-                            <p style="font-size: 0.8em; margin-top: 5px;">
-                                التوكن: ${site.token ? '✅' : '❌'} | 
-                                المنتجات: ${(data.products[site.id] || []).length}
-                            </p>
-                        </div>
-                        <div class="site-actions">
-                            <button class="btn btn-primary" data-action="edit" data-id="${site.id}">✏️</button>
-                            <button class="btn ${site.active ? 'btn-danger' : 'btn-success'}" data-action="toggle" data-id="${site.id}">${site.active ? '⏸️' : '▶️'}</button>
-                            <button class="btn btn-danger" data-action="delete" data-id="${site.id}">🗑️</button>
-                        </div>
-                    </div>
-                `).join('');
-
-                // Add event listeners to site action buttons
-                container.querySelectorAll('.site-actions .btn').forEach(btn => {
+                container.innerHTML = data.sites.map(function(site) {
+                    return '<div class="site-card ' + (site.active ? '' : 'inactive') + '">' +
+                        '<div class="site-info">' +
+                        '<h4>' + site.name + ' ' + (site.active ? '🟢' : '🔴') + '</h4>' +
+                        '<p>' + site.url + '</p>' +
+                        '<p style="font-size:0.8em;margin-top:5px;">التوكن: ' + (site.token ? '✅' : '❌') + ' | المنتجات: ' + (data.products[site.id] || []).length + '</p>' +
+                        '</div>' +
+                        '<div class="site-actions">' +
+                        '<button class="btn btn-primary" data-action="edit" data-id="' + site.id + '">✏️</button>' +
+                        '<button class="btn ' + (site.active ? 'btn-danger' : 'btn-success') + '" data-action="toggle" data-id="' + site.id + '">' + (site.active ? '⏸️' : '▶️') + '</button>' +
+                        '<button class="btn btn-danger" data-action="delete" data-id="' + site.id + '">🗑️</button>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+                container.querySelectorAll('.site-actions .btn').forEach(function(btn) {
                     btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+                        e.preventDefault(); e.stopPropagation();
                         const action = this.getAttribute('data-action');
                         const id = parseInt(this.getAttribute('data-id'));
-
                         if (action === 'edit') editSite(id);
                         else if (action === 'toggle') toggleSite(id);
                         else if (action === 'delete') deleteSite(id);
@@ -1640,57 +719,32 @@
             const urlInput = document.getElementById('siteUrl');
             const tokenInput = document.getElementById('siteToken');
             const formatInput = document.getElementById('siteFormat');
-
             if (!nameInput || !urlInput) return;
-
             const name = nameInput.value.trim();
             const url = urlInput.value.trim();
             const token = tokenInput ? tokenInput.value.trim() : '';
             const format = formatInput ? formatInput.value : 'sahl';
-
-            if (!name || !url) {
-                showAlert('❌ الرجاء ملء اسم الموقع والرابط');
-                return;
-            }
-
-            try {
-                new URL(url);
-            } catch {
-                showAlert('❌ الرابط غير صالح');
-                return;
-            }
-
+            if (!name || !url) { showAlert('❌ الرجاء ملء اسم الموقع والرابط'); return; }
+            try { new URL(url); } catch(e) { showAlert('❌ الرابط غير صالح'); return; }
             const data = getData();
-            data.sites.push({
-                id: Date.now(),
-                name,
-                url,
-                token,
-                format,
-                active: true
-            });
+            data.sites.push({ id: Date.now(), name: name, url: url, token: token, format: format, active: true });
             setData(data);
-
             nameInput.value = '';
             if (urlInput) urlInput.value = '';
             if (tokenInput) tokenInput.value = '';
-
-            log(`✅ تم إضافة الموقع: ${name}`, 'success');
-            loadSites();
-            showAlert('✅ تم إضافة الموقع بنجاح', 'success');
+            log('✅ تم إضافة الموقع: ' + name, 'success');
+            loadSites(); showAlert('✅ تم إضافة الموقع', 'success');
         }
 
         function editSite(id) {
             const data = getData();
-            const site = data.sites.find(s => s.id === id);
+            const site = data.sites.find(function(s) { return s.id === id; });
             if (!site) return;
-
             const editId = document.getElementById('editSiteId');
             const editName = document.getElementById('editSiteName');
             const editUrl = document.getElementById('editSiteUrl');
             const editToken = document.getElementById('editSiteToken');
             const modal = document.getElementById('editModal');
-
             if (editId) editId.value = id;
             if (editName) editName.value = site.name;
             if (editUrl) editUrl.value = site.url;
@@ -1701,26 +755,19 @@
         function updateSite() {
             const editId = document.getElementById('editSiteId');
             if (!editId) return;
-
             const id = parseInt(editId.value);
             const data = getData();
-            const site = data.sites.find(s => s.id === id);
-
+            const site = data.sites.find(function(s) { return s.id === id; });
             if (site) {
                 const editName = document.getElementById('editSiteName');
                 const editUrl = document.getElementById('editSiteUrl');
                 const editToken = document.getElementById('editSiteToken');
-
                 if (editName) site.name = editName.value;
                 if (editUrl) site.url = editUrl.value;
                 if (editToken) site.token = editToken.value;
-
-                setData(data);
-                log(`✏️ تم تعديل الموقع: ${site.name}`, 'info');
+                setData(data); log('✏️ تم تعديل: ' + site.name, 'info');
             }
-
-            closeModal();
-            loadSites();
+            closeModal(); loadSites();
         }
 
         function closeModal() {
@@ -1730,134 +777,98 @@
 
         function toggleSite(id) {
             const data = getData();
-            const site = data.sites.find(s => s.id === id);
-            if (site) {
-                site.active = !site.active;
-                setData(data);
-                log(`${site.active ? '▶️' : '⏸️'} الموقع ${site.name}`, 'warning');
-                loadSites();
-            }
+            const site = data.sites.find(function(s) { return s.id === id; });
+            if (site) { site.active = !site.active; setData(data); log((site.active ? '▶️' : '⏸️') + ' ' + site.name, 'warning'); loadSites(); }
         }
 
         function deleteSite(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا الموقع؟')) return;
+            if (!confirm('هل أنت متأكد؟')) return;
             const data = getData();
-            data.sites = data.sites.filter(s => s.id !== id);
-            delete data.products[id];
-            setData(data);
-            log('🗑️ تم حذف موقع', 'warning');
-            loadSites();
+            data.sites = data.sites.filter(function(s) { return s.id !== id; });
+            delete data.products[id]; setData(data); log('🗑️ تم حذف موقع', 'warning'); loadSites();
         }
 
-        // ========== PRODUCTS ==========
-        async function fetchAllProducts() {
+        // Products
+        function fetchAllProducts() {
             const data = getData();
-            const activeSites = data.sites.filter(s => s.active);
-
-            if (activeSites.length === 0) {
-                showAlert('❌ لا توجد مواقع مفعلة');
-                return;
-            }
-
+            const activeSites = data.sites.filter(function(s) { return s.active; });
+            if (activeSites.length === 0) { showAlert('❌ لا توجد مواقع مفعلة'); return; }
             log('🔄 جاري جلب المنتجات...', 'info');
-
-            for (const site of activeSites) {
-                try {
-                    const headers = {};
-                    if (site.token) headers['api-token'] = site.token;
-
-                    const response = await fetch(site.url, { headers });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    const responseData = await response.json();
-
+            let processed = 0;
+            activeSites.forEach(function(site) {
+                const headers = {};
+                if (site.token) headers['api-token'] = site.token;
+                fetch(site.url, { headers: headers }).then(function(response) {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.json();
+                }).then(function(responseData) {
                     let products = [];
                     if (site.format === 'sahl') {
                         products = Array.isArray(responseData) ? responseData : (responseData.data || responseData.products || []);
                     } else {
                         products = Array.isArray(responseData) ? responseData : [];
                     }
-
-                    const parsed = products.map(p => ({
-                        id: p.id || p.product_id || p._id || Math.random().toString(36),
-                        name: p.name || p.title || p.product_name || 'منتج غير معروف',
-                        price: parseFloat(p.price) || 0,
-                        basePrice: parseFloat(p.base_price) || parseFloat(p.price) || 0,
-                        available: p.available !== false && p.in_stock !== false && p.status !== 'out_of_stock',
-                        category: p.category_name || p.category || p.type || 'عام',
-                        params: p.params || p.options || [],
-                        qtyMin: p.qty_values?.min || p.min_quantity || 1,
-                        qtyMax: p.qty_values?.max || p.max_quantity || 1,
-                        productType: p.product_type || p.type || 'amount',
-                        parentId: p.parent_id || 0
-                    }));
-
+                    const parsed = products.map(function(p) {
+                        return {
+                            id: p.id || p.product_id || p._id || Math.random().toString(36),
+                            name: p.name || p.title || p.product_name || 'منتج غير معروف',
+                            price: parseFloat(p.price) || 0,
+                            basePrice: parseFloat(p.base_price) || parseFloat(p.price) || 0,
+                            available: p.available !== false && p.in_stock !== false && p.status !== 'out_of_stock',
+                            category: p.category_name || p.category || p.type || 'عام',
+                            params: p.params || p.options || [],
+                            qtyMin: (p.qty_values && p.qty_values.min) || p.min_quantity || 1,
+                            qtyMax: (p.qty_values && p.qty_values.max) || p.max_quantity || 1,
+                            productType: p.product_type || p.type || 'amount',
+                            parentId: p.parent_id || 0
+                        };
+                    });
                     data.products[site.id] = parsed;
-                    log(`✅ ${site.name}: ${parsed.length} منتج`, 'success');
-                } catch (err) {
-                    log(`❌ خطأ في ${site.name}: ${err.message}`, 'error');
-                    showAlert(`❌ خطأ في ${site.name}: ${err.message}`, 'error');
-                }
-            }
-
-            setData(data);
-
-            const totalProducts = Object.values(data.products).flat().length;
-            const totalProductsEl = document.getElementById('totalProducts');
-            if (totalProductsEl) totalProductsEl.textContent = totalProducts;
-
-            showAlert(`✅ تم جلب ${totalProducts} منتج بنجاح!`, 'success');
-
-            if (!document.getElementById('products').classList.contains('hidden')) {
-                loadProducts();
-            }
+                    log('✅ ' + site.name + ': ' + parsed.length + ' منتج', 'success');
+                    processed++;
+                    if (processed === activeSites.length) {
+                        setData(data);
+                        const totalProducts = Object.values(data.products).flat().length;
+                        const totalProductsEl = document.getElementById('totalProducts');
+                        if (totalProductsEl) totalProductsEl.textContent = totalProducts;
+                        showAlert('✅ تم جلب ' + totalProducts + ' منتج', 'success');
+                        if (!document.getElementById('products').classList.contains('hidden')) loadProducts();
+                    }
+                }).catch(function(err) {
+                    log('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
+                    showAlert('❌ خطأ في ' + site.name + ': ' + err.message, 'error');
+                    processed++;
+                });
+            });
         }
 
         function loadProducts() {
             const data = getData();
             const tbody = document.getElementById('productsTable');
             if (!tbody) return;
-
-            let html = '';
-            let total = 0;
-
-            for (const [siteId, siteProducts] of Object.entries(data.products)) {
-                const site = data.sites.find(s => s.id == siteId);
+            let html = ''; let total = 0;
+            for (const siteId in data.products) {
+                const siteProducts = data.products[siteId];
+                const site = data.sites.find(function(s) { return s.id == siteId; });
                 if (!site) continue;
-
-                siteProducts.forEach(product => {
+                siteProducts.forEach(function(product) {
                     total++;
-                    const lastPrice = data.history.find(h => h.productId === product.id && h.siteId == siteId);
+                    const lastPrice = data.history.find(function(h) { return h.productId === product.id && h.siteId == siteId; });
                     const priceChange = lastPrice ? (product.price - lastPrice.price).toFixed(3) : 0;
                     const changeClass = priceChange > 0 ? 'price-up' : (priceChange < 0 ? 'price-down' : '');
                     const changeIcon = priceChange > 0 ? '📈' : (priceChange < 0 ? '📉' : '➡️');
-
-                    html += `<tr>
-                        <td>
-                            <strong>${product.name}</strong>
-                            <br><small style="color: var(--text-muted)">${product.category}</small>
-                        </td>
-                        <td>${site.name}</td>
-                        <td><strong>$${product.price}</strong></td>
-                        <td class="${changeClass}">${changeIcon} ${Math.abs(priceChange)}</td>
-                        <td>${product.available ? '🟢 متوفر' : '🔴 غير متوفر'}</td>
-                    </tr>`;
+                    html += '<tr><td><strong>' + product.name + '</strong><br><small style="color:var(--text-muted)">' + product.category + '</small></td><td>' + site.name + '</td><td><strong>$' + product.price + '</strong></td><td class="' + changeClass + '">' + changeIcon + ' ' + Math.abs(priceChange) + '</td><td>' + (product.available ? '🟢 متوفر' : '🔴 غير متوفر') + '</td></tr>';
                 });
             }
-
-            tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding: 50px;"><div class="empty-state">لا توجد منتجات</div></td></tr>';
-
+            tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;padding:50px;"><div class="empty-state">لا توجد منتجات</div></td></tr>';
             const totalProductsEl = document.getElementById('totalProducts');
             if (totalProductsEl) totalProductsEl.textContent = total;
         }
 
-        // ========== COMPARISON ==========
+        // Comparison
         function setCurrency(currency, btn) {
             currentCurrency = currency;
-            document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.currency-btn').forEach(function(b) { b.classList.remove('active'); });
             if (btn) btn.classList.add('active');
             loadComparison();
         }
@@ -1876,130 +887,71 @@
             const data = getData();
             const container = document.getElementById('comparisonContainer');
             if (!container) return;
-
             const groups = {};
-
-            for (const [siteId, siteProducts] of Object.entries(data.products)) {
-                const site = data.sites.find(s => s.id == siteId);
+            for (const siteId in data.products) {
+                const siteProducts = data.products[siteId];
+                const site = data.sites.find(function(s) { return s.id == siteId; });
                 if (!site) continue;
-                siteProducts.forEach(p => {
+                siteProducts.forEach(function(p) {
                     const key = p.name.toLowerCase().trim();
                     if (!groups[key]) groups[key] = [];
-                    groups[key].push({ ...p, siteName: site.name, siteId, siteColor: getSiteColor(site.id) });
+                    groups[key].push(Object.assign({}, p, { siteName: site.name, siteId: siteId, siteColor: getSiteColor(site.id) }));
                 });
             }
-
             let html = '';
-            for (const [name, items] of Object.entries(groups)) {
+            for (const name in groups) {
+                const items = groups[name];
                 if (items.length < 2) continue;
-
-                const minPrice = Math.min(...items.map(i => i.price));
-                const maxPrice = Math.max(...items.map(i => i.price));
-                const avgPrice = (items.reduce((a, b) => a + b.price, 0) / items.length).toFixed(2);
-                const bestSite = items.find(i => i.price === minPrice);
-                const worstSite = items.find(i => i.price === maxPrice);
+                const prices = items.map(function(i) { return i.price; });
+                const minPrice = Math.min.apply(null, prices);
+                const maxPrice = Math.max.apply(null, prices);
+                const avgPrice = (items.reduce(function(a, b) { return a + b.price; }, 0) / items.length).toFixed(2);
+                const bestSite = items.find(function(i) { return i.price === minPrice; });
+                const worstSite = items.find(function(i) { return i.price === maxPrice; });
                 const savings = maxPrice - minPrice;
                 const savingsPercent = ((savings / maxPrice) * 100).toFixed(1);
-
-                html += `<div class="comparison-product">
-                    <div class="comparison-header">
-                        <h4>🎮 ${name}</h4>
-                        <span class="category-badge">${items[0].category}</span>
-                    </div>
-
-                    <table class="comparison-table">
-                        <thead>
-                            <tr>
-                                <th>الموقع</th>
-                                <th>السعر</th>
-                                <th>الفرق</th>
-                                <th>التوفير</th>
-                                <th>الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${items.map(item => {
-                                const isBest = item.price === minPrice;
-                                const isWorst = item.price === maxPrice && maxPrice !== minPrice;
-                                const diff = (item.price - minPrice).toFixed(2);
-                                const itemSavings = maxPrice === minPrice ? 0 : ((1 - item.price/maxPrice) * 100).toFixed(1);
-                                const convertedPrice = convertPrice(item.price);
-                                const symbol = getCurrencySymbol();
-
-                                return `<tr>
-                                    <td>
-                                        <span class="site-badge" style="background: ${item.siteColor}20; color: ${item.siteColor}">
-                                            <span class="dot" style="background: ${item.siteColor}"></span>
-                                            ${item.siteName}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="price-tag ${isBest ? 'best' : (isWorst ? 'high' : 'normal')}">
-                                            ${symbol}${convertedPrice}
-                                            ${isBest ? '🏆' : ''}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        ${isBest ? '<span class="winner-badge">✨ أفضل سعر</span>' : `<span style="color: var(--danger)">+${symbol}${convertPrice(parseFloat(diff))}</span>`}
-                                    </td>
-                                    <td>
-                                        ${isBest ? '-' : `<span class="savings-badge ${itemSavings > 0 ? 'positive' : 'negative'}">${itemSavings}%</span>`}
-                                    </td>
-                                    <td>
-                                        ${item.available ? '🟢 متوفر' : '🔴 غير متوفر'}
-                                    </td>
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
-                    </table>
-
-                    <div class="comparison-summary">
-                        <div class="summary-card">
-                            <div class="label">💰 أقل سعر</div>
-                            <div class="value" style="color: var(--success)">${getCurrencySymbol()}${convertPrice(minPrice)}</div>
-                            <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 5px;">${bestSite.siteName}</div>
-                        </div>
-                        <div class="summary-card">
-                            <div class="label">📈 أعلى سعر</div>
-                            <div class="value" style="color: var(--danger)">${getCurrencySymbol()}${convertPrice(maxPrice)}</div>
-                            <div style="font-size: 0.8em; color: var(--text-muted); margin-top: 5px;">${worstSite.siteName}</div>
-                        </div>
-                        <div class="summary-card">
-                            <div class="label">📊 متوسط السعر</div>
-                            <div class="value">${getCurrencySymbol()}${convertPrice(parseFloat(avgPrice))}</div>
-                        </div>
-                        <div class="summary-card">
-                            <div class="label">💸 التوفير المحتمل</div>
-                            <div class="value" style="color: var(--success)">${getCurrencySymbol()}${convertPrice(savings)} (${savingsPercent}%)</div>
-                        </div>
-                    </div>
-                </div>`;
+                html += '<div class="comparison-product">' +
+                    '<div class="comparison-header"><h4>🎮 ' + name + '</h4><span class="category-badge">' + items[0].category + '</span></div>' +
+                    '<table class="comparison-table"><thead><tr><th>الموقع</th><th>السعر</th><th>الفرق</th><th>التوفير</th><th>الحالة</th></tr></thead><tbody>';
+                items.forEach(function(item) {
+                    const isBest = item.price === minPrice;
+                    const isWorst = item.price === maxPrice && maxPrice !== minPrice;
+                    const diff = (item.price - minPrice).toFixed(2);
+                    const itemSavings = maxPrice === minPrice ? 0 : ((1 - item.price/maxPrice) * 100).toFixed(1);
+                    const convertedPrice = convertPrice(item.price);
+                    const symbol = getCurrencySymbol();
+                    html += '<tr><td><span class="site-badge" style="background:' + item.siteColor + '20;color:' + item.siteColor + '"><span class="dot" style="background:' + item.siteColor + '"></span>' + item.siteName + '</span></td>' +
+                        '<td><span class="price-tag ' + (isBest ? 'best' : (isWorst ? 'high' : '')) + '">' + symbol + convertedPrice + (isBest ? ' 🏆' : '') + '</span></td>' +
+                        '<td>' + (isBest ? '<span class="winner-badge">✨ أفضل سعر</span>' : '<span style="color:var(--danger)">+' + symbol + convertPrice(parseFloat(diff)) + '</span>') + '</td>' +
+                        '<td>' + (isBest ? '-' : '<span style="color:' + (itemSavings > 0 ? 'var(--success)' : 'var(--danger)') + '">' + itemSavings + '%</span>') + '</td>' +
+                        '<td>' + (item.available ? '🟢' : '🔴') + '</td></tr>';
+                });
+                html += '</tbody></table>' +
+                    '<div class="comparison-summary">' +
+                    '<div class="summary-card"><div class="label">💰 أقل سعر</div><div class="value" style="color:var(--success)">' + getCurrencySymbol() + convertPrice(minPrice) + '</div><div style="font-size:0.8em;color:var(--text-muted);margin-top:5px;">' + bestSite.siteName + '</div></div>' +
+                    '<div class="summary-card"><div class="label">📈 أعلى سعر</div><div class="value" style="color:var(--danger)">' + getCurrencySymbol() + convertPrice(maxPrice) + '</div><div style="font-size:0.8em;color:var(--text-muted);margin-top:5px;">' + worstSite.siteName + '</div></div>' +
+                    '<div class="summary-card"><div class="label">📊 متوسط</div><div class="value">' + getCurrencySymbol() + convertPrice(parseFloat(avgPrice)) + '</div></div>' +
+                    '<div class="summary-card"><div class="label">💸 توفير</div><div class="value" style="color:var(--success)">' + getCurrencySymbol() + convertPrice(savings) + ' (' + savingsPercent + '%)</div></div>' +
+                    '</div></div>';
             }
-
-            container.innerHTML = html || '<div class="empty-state">لا توجد منتجات مشتركة للمقارنة</div>';
+            container.innerHTML = html || '<div class="empty-state">لا توجد منتجات للمقارنة</div>';
         }
 
         function filterComparison() {
             const searchInput = document.getElementById('compareSearch');
             if (!searchInput) return;
-
             const search = searchInput.value.toLowerCase();
-            document.querySelectorAll('.comparison-product').forEach(card => {
+            document.querySelectorAll('.comparison-product').forEach(function(card) {
                 const h4 = card.querySelector('h4');
-                if (h4) {
-                    const name = h4.textContent.toLowerCase();
-                    card.style.display = name.includes(search) ? 'block' : 'none';
-                }
+                if (h4) card.style.display = h4.textContent.toLowerCase().includes(search) ? 'block' : 'none';
             });
         }
 
-        // ========== TELEGRAM ==========
+        // Telegram
         function saveBotConfig() {
             const botToken = document.getElementById('botToken');
             const signature = document.getElementById('signature');
-
             if (!botToken || !signature) return;
-
             const telegram = DB.get('telegram') || {};
             telegram.botToken = botToken.value.trim();
             telegram.signature = signature.value.trim();
@@ -2012,37 +964,27 @@
             const telegram = DB.get('telegram') || { users: [] };
             const container = document.getElementById('telegramUsers');
             if (!container) return;
-
-            container.innerHTML = telegram.users.map((user, index) => `
-                <div class="telegram-user">
-                    <div class="telegram-user-header">
-                        <div class="telegram-user-info">
-                            <h4>👤 ${user.name}</h4>
-                            <p>Chat ID: ${user.chatId}</p>
-                        </div>
-                        <div class="site-actions">
-                            <button class="btn btn-primary" data-action="edit-user" data-index="${index}">✏️</button>
-                            <button class="btn btn-danger" data-action="delete-user" data-index="${index}">🗑️</button>
-                        </div>
-                    </div>
-                    <div class="notification-types" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        ${user.notifications.priceDrop ? '<span style="color: var(--success); background: rgba(0,184,148,0.1); padding: 4px 10px; border-radius: 8px; font-size: 0.85em;">📉 انخفاض</span>' : ''}
-                        ${user.notifications.priceRise ? '<span style="color: var(--danger); background: rgba(225,112,85,0.1); padding: 4px 10px; border-radius: 8px; font-size: 0.85em;">📈 ارتفاع</span>' : ''}
-                        ${user.notifications.bestPrice ? '<span style="color: var(--warning); background: rgba(253,203,110,0.1); padding: 4px 10px; border-radius: 8px; font-size: 0.85em;">🏆 أفضل سعر</span>' : ''}
-                        ${user.notifications.outOfStock ? '<span style="color: var(--danger); background: rgba(225,112,85,0.1); padding: 4px 10px; border-radius: 8px; font-size: 0.85em;">⚠️ نفاد</span>' : ''}
-                        ${user.notifications.backInStock ? '<span style="color: var(--success); background: rgba(0,184,148,0.1); padding: 4px 10px; border-radius: 8px; font-size: 0.85em;">✅ توفر</span>' : ''}
-                    </div>
-                </div>
-            `).join('');
-
-            // Add event listeners to user action buttons
-            container.querySelectorAll('.site-actions .btn').forEach(btn => {
+            container.innerHTML = telegram.users.map(function(user, index) {
+                return '<div class="telegram-user">' +
+                    '<div class="telegram-user-header">' +
+                    '<div class="telegram-user-info"><h4>👤 ' + user.name + '</h4><p>Chat ID: ' + user.chatId + '</p></div>' +
+                    '<div class="site-actions">' +
+                    '<button class="btn btn-primary" data-action="edit-user" data-index="' + index + '">✏️</button>' +
+                    '<button class="btn btn-danger" data-action="delete-user" data-index="' + index + '">🗑️</button>' +
+                    '</div></div>' +
+                    '<div class="notification-types">' +
+                    (user.notifications.priceDrop ? '<span class="notif-tag success">📉 انخفاض</span>' : '') +
+                    (user.notifications.priceRise ? '<span class="notif-tag danger">📈 ارتفاع</span>' : '') +
+                    (user.notifications.bestPrice ? '<span class="notif-tag warning">🏆 أفضل سعر</span>' : '') +
+                    (user.notifications.outOfStock ? '<span class="notif-tag danger">⚠️ نفاد</span>' : '') +
+                    (user.notifications.backInStock ? '<span class="notif-tag success">✅ توفر</span>' : '') +
+                    '</div></div>';
+            }).join('');
+            container.querySelectorAll('.site-actions .btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     const action = this.getAttribute('data-action');
                     const index = parseInt(this.getAttribute('data-index'));
-
                     if (action === 'edit-user') editTelegramUser(index);
                     else if (action === 'delete-user') deleteTelegramUser(index);
                 });
@@ -2059,7 +1001,6 @@
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
             const modal = document.getElementById('userModal');
-
             if (editUserId) editUserId.value = '-1';
             if (userName) userName.value = '';
             if (userChatId) userChatId.value = '';
@@ -2075,7 +1016,6 @@
             const telegram = DB.get('telegram') || { users: [] };
             const user = telegram.users[index];
             if (!user) return;
-
             const editUserId = document.getElementById('editUserId');
             const userName = document.getElementById('userName');
             const userChatId = document.getElementById('userChatId');
@@ -2085,7 +1025,6 @@
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
             const modal = document.getElementById('userModal');
-
             if (editUserId) editUserId.value = index;
             if (userName) userName.value = user.name;
             if (userChatId) userChatId.value = user.chatId;
@@ -2101,9 +1040,7 @@
             const telegram = DB.get('telegram') || { users: [] };
             const editUserId = document.getElementById('editUserId');
             if (!editUserId) return;
-
             const index = parseInt(editUserId.value);
-
             const userName = document.getElementById('userName');
             const userChatId = document.getElementById('userChatId');
             const userPriceDrop = document.getElementById('userPriceDrop');
@@ -2111,7 +1048,6 @@
             const userBestPrice = document.getElementById('userBestPrice');
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
-
             const userData = {
                 name: userName ? userName.value.trim() : '',
                 chatId: userChatId ? userChatId.value.trim() : '',
@@ -2123,33 +1059,26 @@
                     backInStock: userBackInStock ? userBackInStock.checked : false
                 }
             };
-
-            if (!userData.name || !userData.chatId) {
-                showAlert('❌ الرجاء ملء جميع الحقول');
-                return;
-            }
-
+            if (!userData.name || !userData.chatId) { showAlert('❌ الرجاء ملء جميع الحقول'); return; }
             if (index === -1) {
                 telegram.users.push(userData);
-                log(`✅ تم إضافة مستخدم: ${userData.name}`, 'success');
+                log('✅ تم إضافة مستخدم: ' + userData.name, 'success');
             } else {
                 telegram.users[index] = userData;
-                log(`✏️ تم تعديل مستخدم: ${userData.name}`, 'info');
+                log('✏️ تم تعديل: ' + userData.name, 'info');
             }
-
             DB.set('telegram', telegram);
-            closeUserModal();
-            loadTelegramUsers();
-            showAlert('✅ تم حفظ المستخدم بنجاح', 'success');
+            closeUserModal(); loadTelegramUsers();
+            showAlert('✅ تم حفظ المستخدم', 'success');
         }
 
         function deleteTelegramUser(index) {
             if (!confirm('هل أنت متأكد؟')) return;
             const telegram = DB.get('telegram') || { users: [] };
-            const name = telegram.users[index]?.name;
+            const name = telegram.users[index] ? telegram.users[index].name : '';
             telegram.users.splice(index, 1);
             DB.set('telegram', telegram);
-            log(`🗑️ تم حذف مستخدم: ${name}`, 'warning');
+            log('🗑️ تم حذف: ' + name, 'warning');
             loadTelegramUsers();
         }
 
@@ -2158,273 +1087,207 @@
             if (modal) modal.classList.remove('active');
         }
 
-        // ========== MONITORING ==========
+        // Monitoring
         function setCustomInterval() {
             const intervalInput = document.getElementById('intervalInput');
             if (!intervalInput) return;
-
             const minutes = parseInt(intervalInput.value);
-            if (minutes < 1 || minutes > 1440) {
-                showAlert('❌ يجب أن تكون القيمة بين 1 و 1440 دقيقة');
-                return;
-            }
-
+            if (minutes < 1 || minutes > 1440) { showAlert('❌ القيمة بين 1 و 1440'); return; }
             const settings = DB.get('settings') || {};
             settings.interval = minutes;
             DB.set('settings', settings);
-
-            log(`⏱️ تم تعيين فترة الفحص: ${minutes} دقيقة`, 'success');
-            showAlert(`✅ تم تعيين فترة الفحص إلى ${minutes} دقيقة`, 'success');
+            log('⏱️ فترة الفحص: ' + minutes + ' دقيقة', 'success');
+            showAlert('✅ تم الحفظ', 'success');
         }
 
-        async function startMonitoring() {
+        function startMonitoring() {
             const data = getData();
             const settings = DB.get('settings') || {};
             const telegram = DB.get('telegram') || {};
-
             if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
-                showAlert('❌ أكمل إعدادات تلجرام أولاً', 'error');
-                return;
+                showAlert('❌ أكمل إعدادات تلجرام', 'error'); return;
             }
-
-            // Try to start via Worker first, if connected
             if (workerConnected && settings.workerUrl) {
-                const config = {
-                    active: true,
-                    sites: data.sites.filter(s => s.active),
-                    telegram: telegram,
-                    interval: settings.interval
-                };
-
-                const result = await callWorker('/api/start-monitor', { config });
-
-                if (result && result.success) {
-                    data.monitorActive = true;
-                    setData(data);
-                    updateStatus();
-                    showAlert('✅ تم تفعيل المراقبة عبر الـ Worker!', 'success', 8000);
-                    log('▶️ تم تفعيل المراقبة عبر الـ Worker', 'success');
-                    startMonitorLoop();
-                    return;
-                }
+                callWorker('/api/start-monitor', {
+                    config: { active: true, sites: data.sites.filter(function(s) { return s.active; }), telegram: telegram, interval: settings.interval }
+                }).then(function(result) {
+                    if (result && result.success) {
+                        data.monitorActive = true; setData(data); updateStatus();
+                        showAlert('✅ تم التفعيل عبر Worker', 'success', 8000);
+                        log('▶️ عبر Worker', 'success'); startMonitorLoop();
+                    } else {
+                        startLocalMonitoring();
+                    }
+                });
+            } else {
+                startLocalMonitoring();
             }
+        }
 
-            // Fallback to local monitoring
-            log('▶️ تم تفعيل المراقبة المحلية', 'success');
-
-            data.monitorActive = true;
-            setData(data);
-            updateStatus();
-
-            showAlert('✅ تم تفعيل المراقبة المحلية!', 'success', 8000);
-
+        function startLocalMonitoring() {
+            const data = getData();
+            log('▶️ مراقبة محلية', 'success');
+            data.monitorActive = true; setData(data); updateStatus();
+            showAlert('✅ تم التفعيل محلياً', 'success', 8000);
             startMonitorLoop();
         }
 
         function startMonitorLoop() {
             const settings = DB.get('settings') || {};
             const interval = (settings.interval || 1) * 60 * 1000;
-
             if (monitorInterval) clearInterval(monitorInterval);
-
-            monitorInterval = setInterval(async () => {
+            monitorInterval = setInterval(function() {
                 const data = getData();
-                if (!data.monitorActive) {
-                    clearInterval(monitorInterval);
-                    monitorInterval = null;
-                    return;
-                }
-
-                log('🔄 فحص دوري...', 'info');
-                await checkNow();
+                if (!data.monitorActive) { clearInterval(monitorInterval); monitorInterval = null; return; }
+                log('🔄 فحص دوري...', 'info'); checkNow();
             }, interval);
         }
 
-        async function stopMonitoring() {
+        function stopMonitoring() {
             const settings = DB.get('settings') || {};
-
-            // Try to stop via Worker if connected
             if (workerConnected && settings.workerUrl) {
-                const result = await callWorker('/api/stop-monitor');
-                if (result && result.success) {
-                    log('⏹️ تم إيقاف المراقبة عبر الـ Worker', 'warning');
-                }
+                callWorker('/api/stop-monitor').then(function(result) {
+                    if (result && result.success) log('⏹️ Worker توقف', 'warning');
+                });
             }
-
             const data = getData();
-            data.monitorActive = false;
-            setData(data);
-            updateStatus();
-
-            if (monitorInterval) {
-                clearInterval(monitorInterval);
-                monitorInterval = null;
-            }
-
-            showAlert('⏹️ تم إيقاف المراقبة', 'success');
-            log('⏹️ تم إيقاف المراقبة', 'warning');
+            data.monitorActive = false; setData(data); updateStatus();
+            if (monitorInterval) { clearInterval(monitorInterval); monitorInterval = null; }
+            showAlert('⏹️ توقف', 'success');
+            log('⏹️ توقف', 'warning');
         }
 
-        async function checkNow() {
+        function checkNow() {
             log('🔄 فحص فوري...', 'info');
-            await fetchAllProducts();
-
+            fetchAllProducts();
             const lastCheckEl = document.getElementById('lastCheck');
             if (lastCheckEl) lastCheckEl.textContent = new Date().toLocaleTimeString('ar-SA');
-
             checkPriceChanges();
         }
 
         function checkPriceChanges() {
             const data = getData();
             const telegram = DB.get('telegram') || {};
-
             if (!telegram.botToken || !telegram.users || telegram.users.length === 0) return;
-
             let changesCount = 0;
-
-            for (const [siteId, siteProducts] of Object.entries(data.products)) {
-                const site = data.sites.find(s => s.id == siteId);
+            for (const siteId in data.products) {
+                const siteProducts = data.products[siteId];
+                const site = data.sites.find(function(s) { return s.id == siteId; });
                 if (!site) continue;
-
-                siteProducts.forEach(product => {
-                    const lastPrice = data.history.find(h => h.productId === product.id && h.siteId == siteId);
-
+                siteProducts.forEach(function(product) {
+                    const lastPrice = data.history.find(function(h) { return h.productId === product.id && h.siteId == siteId; });
                     if (lastPrice && lastPrice.price !== product.price) {
                         changesCount++;
                         const change = product.price - lastPrice.price;
-
-                        telegram.users.forEach(user => {
+                        telegram.users.forEach(function(user) {
                             if (change > 0 && user.notifications.priceRise) {
-                                sendTelegramNotification(user.chatId, `📈 ارتفاع سعر
+                                sendTelegramNotification(user.chatId, '📈 ارتفاع سعر
 
-${product.name}
-الموقع: ${site.name}
-السعر القديم: $${lastPrice.price}
-السعر الجديد: $${product.price}
-الفرق: $${Math.abs(change)}`);
+' + product.name + '
+الموقع: ' + site.name + '
+القديم: $' + lastPrice.price + '
+الجديد: $' + product.price);
                             } else if (change < 0 && user.notifications.priceDrop) {
-                                sendTelegramNotification(user.chatId, `📉 انخفاض سعر
+                                sendTelegramNotification(user.chatId, '📉 انخفاض سعر
 
-${product.name}
-الموقع: ${site.name}
-السعر القديم: $${lastPrice.price}
-السعر الجديد: $${product.price}
-الفرق: $${Math.abs(change)}`);
+' + product.name + '
+الموقع: ' + site.name + '
+القديم: $' + lastPrice.price + '
+الجديد: $' + product.price);
                             }
                         });
                     }
-
                     if (lastPrice && lastPrice.available !== product.available) {
-                        telegram.users.forEach(user => {
+                        telegram.users.forEach(function(user) {
                             if (!product.available && user.notifications.outOfStock) {
-                                sendTelegramNotification(user.chatId, `⚠️ نفاد الكمية
+                                sendTelegramNotification(user.chatId, '⚠️ نفاد الكمية
 
-${product.name}
-الموقع: ${site.name}`);
+' + product.name + '
+الموقع: ' + site.name);
                             } else if (product.available && user.notifications.backInStock) {
-                                sendTelegramNotification(user.chatId, `✅ توفر المنتج
+                                sendTelegramNotification(user.chatId, '✅ توفر المنتج
 
-${product.name}
-الموقع: ${site.name}
-السعر: $${product.price}`);
+' + product.name + '
+الموقع: ' + site.name + '
+السعر: $' + product.price);
                             }
                         });
                     }
                 });
             }
-
             const newHistory = [];
-            for (const [siteId, siteProducts] of Object.entries(data.products)) {
-                siteProducts.forEach(p => {
-                    newHistory.push({
-                        productId: p.id,
-                        siteId: parseInt(siteId),
-                        price: p.price,
-                        available: p.available,
-                        timestamp: Date.now()
-                    });
+            for (const siteId in data.products) {
+                data.products[siteId].forEach(function(p) {
+                    newHistory.push({ productId: p.id, siteId: parseInt(siteId), price: p.price, available: p.available, timestamp: Date.now() });
                 });
             }
             data.history = newHistory.slice(-5000);
             setData(data);
-
             const priceChangesEl = document.getElementById('priceChanges');
             if (priceChangesEl) priceChangesEl.textContent = changesCount;
         }
 
-        async function sendTelegramNotification(chatId, message) {
+        function sendTelegramNotification(chatId, message) {
             const telegram = DB.get('telegram') || {};
             if (!telegram.botToken) return;
+            fetch('https://api.telegram.org/bot' + telegram.botToken + '/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: message + '
 
-            try {
-                await fetch(`https://api.telegram.org/bot${telegram.botToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatId,
-                        text: message + `
-
-${telegram.signature || '🤖 1Click Pay Monitor'}`,
-                        parse_mode: 'HTML'
-                    })
-                });
-            } catch (err) {
-                log(`❌ خطأ في إرسال إشعار تلجرام: ${err.message}`, 'error');
-            }
+' + (telegram.signature || '🤖 1Click Pay Monitor'), parse_mode: 'HTML' })
+            }).catch(function(err) {
+                log('❌ خطأ تلجرام: ' + err.message, 'error');
+            });
         }
 
-        // ========== UTILITIES ==========
+        // Utilities
         function exportProducts() {
             const data = getData();
             let csv = 'المنتج,الموقع,السعر,الحالة,الفئة
 ';
-            for (const [siteId, siteProducts] of Object.entries(data.products)) {
-                const site = data.sites.find(s => s.id == siteId);
-                siteProducts.forEach(p => {
-                    csv += `"${p.name}","${site?.name || ''}",${p.price},${p.available ? 'متوفر' : 'غير متوفر'},"${p.category}"
-`;
+            for (const siteId in data.products) {
+                const site = data.sites.find(function(s) { return s.id == siteId; });
+                data.products[siteId].forEach(function(p) {
+                    csv += '"' + p.name + '","' + (site ? site.name : '') + '",' + p.price + ',' + (p.available ? 'متوفر' : 'غير متوفر') + ',"' + p.category + '"
+';
                 });
             }
             const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `products_${new Date().toISOString().split('T')[0]}.csv`;
+            link.download = 'products_' + new Date().toISOString().split('T')[0] + '.csv';
             link.click();
         }
 
         function exportLogs() {
             const logs = DB.get('logs') || [];
-            const text = logs.map(l => `[${l.time}] [${l.type}] ${l.message}`).join('
+            const text = logs.map(function(l) { return '[' + l.time + '] [' + l.type + '] ' + l.message; }).join('
 ');
             const blob = new Blob([text], { type: 'text/plain' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `logs_${new Date().toISOString().split('T')[0]}.txt`;
+            link.download = 'logs_' + new Date().toISOString().split('T')[0] + '.txt';
             link.click();
         }
 
         function clearLogs() {
             if (!confirm('هل أنت متأكد؟')) return;
-            DB.set('logs', []);
-            loadLogs();
+            DB.set('logs', []); loadLogs();
         }
 
-        // ========== EVENT LISTENERS SETUP ==========
+        // Event Listeners Setup
         function setupEventListeners() {
-            // Navigation items
-            document.querySelectorAll('.nav-item').forEach(item => {
+            document.querySelectorAll('.nav-item').forEach(function(item) {
                 item.addEventListener('click', function(e) {
                     const tabName = this.getAttribute('data-tab');
                     if (tabName) showTab(tabName, this);
                 });
             });
 
-            // Theme toggle
             const themeToggle = document.getElementById('themeToggle');
             if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
-            // Dashboard buttons
             const btnStart = document.getElementById('btnStart');
             if (btnStart) btnStart.addEventListener('click', startMonitoring);
 
@@ -2437,51 +1300,43 @@ ${telegram.signature || '🤖 1Click Pay Monitor'}`,
             const btnCheckNow = document.getElementById('btnCheckNow');
             if (btnCheckNow) btnCheckNow.addEventListener('click', checkNow);
 
-            // Worker buttons
             const btnSaveWorker = document.getElementById('btnSaveWorker');
             if (btnSaveWorker) btnSaveWorker.addEventListener('click', saveWorkerUrl);
 
             const btnTestWorker = document.getElementById('btnTestWorker');
             if (btnTestWorker) btnTestWorker.addEventListener('click', testWorkerConnection);
 
-            // Sites buttons
             const btnAddSite = document.getElementById('btnAddSite');
             if (btnAddSite) btnAddSite.addEventListener('click', addSite);
 
-            // Products buttons
             const btnFetchProducts = document.getElementById('btnFetchProducts');
             if (btnFetchProducts) btnFetchProducts.addEventListener('click', fetchAllProducts);
 
             const btnExportProducts = document.getElementById('btnExportProducts');
             if (btnExportProducts) btnExportProducts.addEventListener('click', exportProducts);
 
-            // Comparison search
             const compareSearch = document.getElementById('compareSearch');
             if (compareSearch) compareSearch.addEventListener('keyup', filterComparison);
 
-            // Currency buttons
-            document.querySelectorAll('.currency-btn').forEach(btn => {
+            document.querySelectorAll('.currency-btn').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     const currency = this.getAttribute('data-currency');
                     if (currency) setCurrency(currency, this);
                 });
             });
 
-            // Telegram buttons
             const btnSaveBot = document.getElementById('btnSaveBot');
             if (btnSaveBot) btnSaveBot.addEventListener('click', saveBotConfig);
 
             const btnAddUser = document.getElementById('btnAddUser');
             if (btnAddUser) btnAddUser.addEventListener('click', addTelegramUser);
 
-            // Logs buttons
             const btnClearLogs = document.getElementById('btnClearLogs');
             if (btnClearLogs) btnClearLogs.addEventListener('click', clearLogs);
 
             const btnExportLogs = document.getElementById('btnExportLogs');
             if (btnExportLogs) btnExportLogs.addEventListener('click', exportLogs);
 
-            // Modal buttons
             const btnCancelEdit = document.getElementById('btnCancelEdit');
             if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeModal);
 
@@ -2494,45 +1349,30 @@ ${telegram.signature || '🤖 1Click Pay Monitor'}`,
             const btnSaveUser = document.getElementById('btnSaveUser');
             if (btnSaveUser) btnSaveUser.addEventListener('click', saveTelegramUser);
 
-            // Close modal on outside click
-            document.querySelectorAll('.modal').forEach(modal => {
+            document.querySelectorAll('.modal').forEach(function(modal) {
                 modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        this.classList.remove('active');
-                    }
+                    if (e.target === this) this.classList.remove('active');
                 });
             });
         }
 
-        // ========== INIT ==========
+        // Init
         window.onload = function() {
-            initData();
-            loadTheme();
-            setupEventListeners();
-
+            initData(); loadTheme(); setupEventListeners();
             const data = getData();
             const telegram = DB.get('telegram') || {};
             const settings = DB.get('settings') || {};
-
             const botToken = document.getElementById('botToken');
             const signature = document.getElementById('signature');
             const intervalInput = document.getElementById('intervalInput');
             const workerUrlInput = document.getElementById('workerUrlInput');
-
             if (botToken) botToken.value = telegram.botToken || '';
             if (signature) signature.value = telegram.signature || '';
             if (intervalInput) intervalInput.value = settings.interval || 1;
             if (workerUrlInput) workerUrlInput.value = settings.workerUrl || '';
-
-            updateWorkerStatus();
-            updateStatus();
-            loadSites();
-
-            log('🚀 تم تشغيل النظام - v4.3', 'success');
-
-            if (data.monitorActive) {
-                startMonitorLoop();
-            }
+            updateWorkerStatus(); updateStatus(); loadSites();
+            log('🚀 تم التشغيل - v5.0', 'success');
+            if (data.monitorActive) startMonitorLoop();
         };
     </script>
 </body>
