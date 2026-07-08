@@ -151,6 +151,11 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .empty-state { text-align: center; padding: 50px; color: var(--text-muted); }
         .hidden { display: none !important; }
+        .worker-config { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        [data-theme="light"] .worker-config { background: rgba(255,255,255,0.6); }
+        .worker-connected { border-color: var(--success) !important; background: rgba(0, 184, 148, 0.1) !important; }
+        .worker-status-box { background: var(--bg-card); border-radius: 12px; padding: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
+        .worker-status-box .status-icon { font-size: 2em; }
         @media (max-width: 768px) {
             .sidebar { width: 100%; height: auto; position: relative; }
             .main-content { margin-right: 0; }
@@ -171,6 +176,7 @@
             <div class="nav-item" data-tab="products">📦 المنتجات</div>
             <div class="nav-item" data-tab="comparison">⚖️ المقارنة</div>
             <div class="nav-item" data-tab="telegram">📱 تلجرام</div>
+            <div class="nav-item" data-tab="worker">🔗 Worker</div>
             <div class="nav-item" data-tab="logs">📝 السجلات</div>
         </nav>
         <div class="status-panel">
@@ -181,6 +187,10 @@
             <div class="status-item">
                 <div class="status-dot inactive" id="monitorStatusDot"></div>
                 <span id="monitorStatusText">المراقبة متوقفة</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot inactive" id="workerStatusDot"></div>
+                <span id="workerStatusText">الـ Worker غير متصل</span>
             </div>
         </div>
     </div>
@@ -314,6 +324,42 @@
             </div>
         </div>
 
+        <!-- Worker -->
+        <div id="worker" class="tab-content hidden">
+            <div class="header-bar"><h2>🔗 إعدادات الـ Worker</h2></div>
+            <div class="section">
+                <h3>🔗 ربط الـ Worker</h3>
+                <div class="worker-config" id="workerConfigBox">
+                    <div class="form-group">
+                        <label>رابط الـ Worker URL</label>
+                        <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-success" id="btnSaveWorker">💾 حفظ الرابط</button>
+                        <button class="btn btn-info" id="btnTestWorker">🧪 اختبار الاتصال</button>
+                    </div>
+                    <div id="workerTestResult" style="margin-top:15px;display:none;"></div>
+                </div>
+            </div>
+            <div class="section">
+                <h3>📡 حالة الـ Worker</h3>
+                <div class="worker-status-box" id="workerStatusBox">
+                    <div class="status-icon">🔗</div>
+                    <div>
+                        <h4 style="color:var(--primary);margin-bottom:5px;">الـ Worker</h4>
+                        <p id="workerStatusDesc" style="color:var(--text-muted);font-size:0.9em;">غير مربط - أدخل رابط الـ Worker أعلاه</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h3>🚀 تشغيل/إيقاف عبر Worker</h3>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success" id="btnStartWorker">▶️ تشغيل المراقبة عبر Worker</button>
+                    <button class="btn btn-danger" id="btnStopWorker">⏹️ إيقاف المراقبة عبر Worker</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Logs -->
         <div id="logs" class="tab-content hidden">
             <div class="header-bar">
@@ -421,6 +467,7 @@
         const exchangeRates = { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 };
         let currentCurrency = 'USD';
         let siteColors = {};
+        let workerConnected = false;
         let monitorInterval = null;
 
         function initData() {
@@ -437,7 +484,7 @@
                 DB.set('telegram', { botToken: '', signature: '🤖 1Click Pay Monitor', users: [] });
             }
             if (!DB.get('settings')) {
-                DB.set('settings', { interval: 1, theme: 'dark' });
+                DB.set('settings', { interval: 1, theme: 'dark', workerUrl: '' });
             }
             if (!DB.get('logs')) DB.set('logs', []);
         }
@@ -482,6 +529,7 @@
             if (tabName === 'products') loadProducts();
             if (tabName === 'comparison') loadComparison();
             if (tabName === 'telegram') loadTelegramUsers();
+            if (tabName === 'worker') loadWorkerStatus();
             if (tabName === 'logs') loadLogs();
         }
 
@@ -517,8 +565,12 @@
             const data = getData();
             const monitorDot = document.getElementById('monitorStatusDot');
             const monitorText = document.getElementById('monitorStatusText');
+            const workerDot = document.getElementById('workerStatusDot');
+            const workerText = document.getElementById('workerStatusText');
             if (monitorDot) monitorDot.className = data.monitorActive ? 'status-dot active' : 'status-dot inactive';
             if (monitorText) monitorText.textContent = data.monitorActive ? 'المراقبة نشطة' : 'المراقبة متوقفة';
+            if (workerDot) workerDot.className = workerConnected ? 'status-dot active' : 'status-dot inactive';
+            if (workerText) workerText.textContent = workerConnected ? 'الـ Worker متصل' : 'الـ Worker غير متصل';
         }
 
         function getData() {
@@ -527,7 +579,7 @@
                 products: DB.get('products') || {},
                 history: DB.get('history') || [],
                 telegram: DB.get('telegram') || { botToken: '', signature: '', users: [] },
-                settings: DB.get('settings') || { interval: 1 },
+                settings: DB.get('settings') || { interval: 1, workerUrl: '' },
                 monitorActive: DB.get('monitorActive') || false
             };
         }
@@ -547,6 +599,143 @@
                 siteColors[siteId] = colors[Object.keys(siteColors).length % colors.length];
             }
             return siteColors[siteId];
+        }
+
+        // Worker Functions
+        function saveWorkerUrl() {
+            const urlInput = document.getElementById('workerUrlInput');
+            if (!urlInput) return;
+            const url = urlInput.value.trim();
+            if (!url) { showAlert('❌ الرجاء إدخال رابط الـ Worker'); return; }
+            try { new URL(url); } catch(e) { showAlert('❌ الرابط غير صالح'); return; }
+            const settings = DB.get('settings') || {};
+            settings.workerUrl = url;
+            DB.set('settings', settings);
+            log('💾 تم حفظ رابط الـ Worker', 'success');
+            showAlert('✅ تم حفظ رابط الـ Worker', 'success');
+            updateWorkerStatus();
+        }
+
+        function testWorkerConnection() {
+            const settings = DB.get('settings') || {};
+            const workerUrl = settings.workerUrl;
+            if (!workerUrl) { showAlert('❌ الرجاء حفظ رابط الـ Worker أولاً'); return; }
+            const resultDiv = document.getElementById('workerTestResult');
+            if (resultDiv) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<div class="loading-spinner" style="display:inline-block;vertical-align:middle;margin-left:10px;"></div> جاري الاختبار...';
+            }
+            fetch(workerUrl + '/api/status', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(function(response) {
+                if (response.ok) {
+                    workerConnected = true;
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--success)">✅ الاتصال ناجح!</span>';
+                    log('✅ اختبار الـ Worker ناجح', 'success');
+                } else {
+                    workerConnected = false;
+                    if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ فشل: HTTP ' + response.status + '</span>';
+                    log('❌ فشل اختبار الـ Worker', 'error');
+                }
+                updateWorkerStatus(); updateStatus();
+            }).catch(function(err) {
+                workerConnected = false;
+                if (resultDiv) resultDiv.innerHTML = '<span style="color:var(--danger)">❌ خطأ: ' + err.message + '</span>';
+                log('❌ خطأ في الاتصال: ' + err.message, 'error');
+                updateWorkerStatus(); updateStatus();
+            });
+        }
+
+        function updateWorkerStatus() {
+            const settings = DB.get('settings') || {};
+            const workerUrl = settings.workerUrl;
+            const statusBox = document.getElementById('workerStatusBox');
+            const statusDesc = document.getElementById('workerStatusDesc');
+            const configBox = document.getElementById('workerConfigBox');
+            if (statusBox && statusDesc) {
+                if (workerUrl) {
+                    if (workerConnected) {
+                        statusBox.classList.add('worker-connected');
+                        statusDesc.textContent = 'متصل: ' + workerUrl;
+                        if (configBox) configBox.classList.add('worker-connected');
+                    } else {
+                        statusBox.classList.remove('worker-connected');
+                        statusDesc.textContent = 'غير متصل: ' + workerUrl;
+                        if (configBox) configBox.classList.remove('worker-connected');
+                    }
+                } else {
+                    statusBox.classList.remove('worker-connected');
+                    statusDesc.textContent = 'غير مربط - أدخل رابط الـ Worker';
+                    if (configBox) configBox.classList.remove('worker-connected');
+                }
+            }
+        }
+
+        function loadWorkerStatus() {
+            const settings = DB.get('settings') || {};
+            const workerUrlInput = document.getElementById('workerUrlInput');
+            if (workerUrlInput) workerUrlInput.value = settings.workerUrl || '';
+            updateWorkerStatus();
+        }
+
+        function callWorker(endpoint, body) {
+            const settings = DB.get('settings') || {};
+            const workerUrl = settings.workerUrl;
+            if (!workerUrl) { showAlert('❌ لم يتم ربط الـ Worker'); return Promise.resolve(null); }
+            const options = {
+                method: body ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+            return fetch(workerUrl + endpoint, options).then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            }).catch(function(err) {
+                log('❌ خطأ في الـ Worker: ' + err.message, 'error');
+                workerConnected = false; updateStatus(); return null;
+            });
+        }
+
+        function startWorkerMonitor() {
+            const data = getData();
+            const telegram = DB.get('telegram') || {};
+            const settings = DB.get('settings') || {};
+            if (!settings.workerUrl) { showAlert('❌ الرجاء ربط الـ Worker أولاً'); return; }
+            if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
+                showAlert('❌ أكمل إعدادات تلجرام أولاً', 'error'); return;
+            }
+            callWorker('/api/start-monitor', {
+                config: {
+                    active: true,
+                    sites: data.sites.filter(function(s) { return s.active; }),
+                    telegram: telegram,
+                    interval: settings.interval
+                }
+            }).then(function(result) {
+                if (result && result.success) {
+                    data.monitorActive = true;
+                    setData(data);
+                    updateStatus();
+                    showAlert('✅ تم تشغيل المراقبة عبر Worker', 'success', 8000);
+                    log('▶️ المراقبة عبر Worker', 'success');
+                } else {
+                    showAlert('❌ فشل التشغيل عبر Worker', 'error');
+                }
+            });
+        }
+
+        function stopWorkerMonitor() {
+            callWorker('/api/stop-monitor').then(function(result) {
+                if (result && result.success) {
+                    const data = getData();
+                    data.monitorActive = false;
+                    setData(data);
+                    updateStatus();
+                    showAlert('⏹️ تم إيقاف المراقبة عبر Worker', 'success');
+                    log('⏹️ Worker توقف', 'warning');
+                }
+            });
         }
 
         // Sites
@@ -914,7 +1103,6 @@
             const userChatId = document.getElementById('userChatId');
             const userPriceDrop = document.getElementById('userPriceDrop');
             const userPriceRise = document.getElementById('userPriceRise');
-            const userPriceRise = document.getElementById('userPriceRise');
             const userBestPrice = document.getElementById('userBestPrice');
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
@@ -973,12 +1161,32 @@
         function startMonitoring() {
             const data = getData();
             const telegram = DB.get('telegram') || {};
+            const settings = DB.get('settings') || {};
             if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
                 showAlert('❌ أكمل إعدادات تلجرام', 'error'); return;
             }
+            if (workerConnected && settings.workerUrl) {
+                callWorker('/api/start-monitor', {
+                    config: { active: true, sites: data.sites.filter(function(s) { return s.active; }), telegram: telegram, interval: settings.interval }
+                }).then(function(result) {
+                    if (result && result.success) {
+                        data.monitorActive = true; setData(data); updateStatus();
+                        showAlert('✅ تم التفعيل عبر Worker', 'success', 8000);
+                        log('▶️ عبر Worker', 'success'); startMonitorLoop();
+                    } else {
+                        startLocalMonitoring();
+                    }
+                });
+            } else {
+                startLocalMonitoring();
+            }
+        }
+
+        function startLocalMonitoring() {
+            const data = getData();
             log('▶️ مراقبة محلية', 'success');
             data.monitorActive = true; setData(data); updateStatus();
-            showAlert('✅ تم التفعيل', 'success', 8000);
+            showAlert('✅ تم التفعيل محلياً', 'success', 8000);
             startMonitorLoop();
         }
 
@@ -994,6 +1202,12 @@
         }
 
         function stopMonitoring() {
+            const settings = DB.get('settings') || {};
+            if (workerConnected && settings.workerUrl) {
+                callWorker('/api/stop-monitor').then(function(result) {
+                    if (result && result.success) log('⏹️ Worker توقف', 'warning');
+                });
+            }
             const data = getData();
             data.monitorActive = false; setData(data); updateStatus();
             if (monitorInterval) { clearInterval(monitorInterval); monitorInterval = null; }
@@ -1122,6 +1336,18 @@
             const btnCheckNow = document.getElementById('btnCheckNow');
             if (btnCheckNow) btnCheckNow.addEventListener('click', checkNow);
 
+            const btnSaveWorker = document.getElementById('btnSaveWorker');
+            if (btnSaveWorker) btnSaveWorker.addEventListener('click', saveWorkerUrl);
+
+            const btnTestWorker = document.getElementById('btnTestWorker');
+            if (btnTestWorker) btnTestWorker.addEventListener('click', testWorkerConnection);
+
+            const btnStartWorker = document.getElementById('btnStartWorker');
+            if (btnStartWorker) btnStartWorker.addEventListener('click', startWorkerMonitor);
+
+            const btnStopWorker = document.getElementById('btnStopWorker');
+            if (btnStopWorker) btnStopWorker.addEventListener('click', stopWorkerMonitor);
+
             const btnAddSite = document.getElementById('btnAddSite');
             if (btnAddSite) btnAddSite.addEventListener('click', addSite);
 
@@ -1181,10 +1407,12 @@
             const botToken = document.getElementById('botToken');
             const signature = document.getElementById('signature');
             const intervalInput = document.getElementById('intervalInput');
+            const workerUrlInput = document.getElementById('workerUrlInput');
             if (botToken) botToken.value = telegram.botToken || '';
             if (signature) signature.value = telegram.signature || '';
             if (intervalInput) intervalInput.value = settings.interval || 1;
-            updateStatus(); loadSites();
+            if (workerUrlInput) workerUrlInput.value = settings.workerUrl || '';
+            updateWorkerStatus(); updateStatus(); loadSites();
             log('🚀 تم التشغيل - v5.0', 'success');
             if (data.monitorActive) startMonitorLoop();
         };
