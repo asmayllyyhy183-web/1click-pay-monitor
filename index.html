@@ -982,29 +982,51 @@
             const activeSites = data.sites.filter(function(s) { return s.active; });
             if (activeSites.length === 0) { showAlert('❌ لا توجد مواقع مفعلة'); return; }
             log('🔄 جاري جلب المنتجات من ' + activeSites.length + ' موقع...', 'info');
-            let processed = 0;
+
+            let completed = 0;
+            const total = activeSites.length;
+
+            function onSiteDone() {
+                completed++;
+                console.log('Completed:', completed, 'of', total);
+                if (completed >= total) {
+                    setData(data);
+                    const totalProducts = Object.values(data.products).flat().length;
+                    const totalProductsEl = document.getElementById('totalProducts');
+                    if (totalProductsEl) totalProductsEl.textContent = totalProducts;
+                    showAlert('✅ تم جلب ' + totalProducts + ' منتج', 'success');
+                    if (!document.getElementById('products').classList.contains('hidden')) loadProducts();
+                }
+            }
+
             activeSites.forEach(function(site) {
-                // Always try direct fetch first (faster, no Worker needed if CORS allows)
-                log('🔄 جاري جلب من: ' + site.name + ' (' + site.url + ')', 'info');
-                fetchProductsDirect(site, data, function(success) {
-                    processed++;
-                    if (!success && workerConnected && settings.workerUrl) {
-                        // Direct failed, try Worker as fallback
-                        log('⚠️ الطلب المباشر فشل، جرب Worker...', 'warning');
-                        fetchProductsViaWorker(site, data, function() {
-                            processed++;
-                            checkAllProcessed(data, processed, activeSites.length);
-                        });
-                    } else {
-                        checkAllProcessed(data, processed, activeSites.length);
-                    }
-                });
+                // Try Worker first if available (bypasses CORS)
+                if (workerConnected && settings.workerUrl) {
+                    log('🔄 جلب عبر Worker: ' + site.name, 'info');
+                    fetchProductsViaWorker(site, data, function(success) {
+                        if (!success) {
+                            log('⚠️ Worker فشل، جرب الطلب المباشر...', 'warning');
+                            fetchProductsDirect(site, data, function() {
+                                onSiteDone();
+                            });
+                        } else {
+                            onSiteDone();
+                        }
+                    });
+                } else {
+                    // No Worker, try direct (will likely fail due to CORS)
+                    log('🔄 جلب مباشر: ' + site.name, 'info');
+                    fetchProductsDirect(site, data, function() {
+                        onSiteDone();
+                    });
+                }
             });
         }
 
         function fetchProductsViaWorker(site, data, callback) {
             const settings = DB.get('settings') || {};
-            fetch(settings.workerUrl + '/api/fetch-products', {
+            const workerUrl = settings.workerUrl.replace(/\/+$/, ''); // remove trailing slashes
+            fetch(workerUrl + '/api/fetch-products', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1013,15 +1035,18 @@
                     format: site.format
                 })
             }).then(function(response) {
+                console.log('Worker response status:', response.status);
                 if (!response.ok) throw new Error('Worker HTTP ' + response.status);
                 return response.json();
             }).then(function(result) {
+                console.log('Worker result:', result.success ? 'success' : 'failed');
                 if (!result.success) throw new Error(result.error || 'Worker error');
                 processProducts(site, result.data, data);
-                if (callback) callback();
+                if (callback) callback(true);
             }).catch(function(err) {
-                log('❌ Worker فشل أيضاً: ' + err.message, 'error');
-                if (callback) callback();
+                console.error('Worker error:', err.message);
+                log('❌ Worker فشل: ' + err.message, 'error');
+                if (callback) callback(false);
             });
         }
 
@@ -1074,17 +1099,7 @@
             log('✅ ' + site.name + ': ' + parsed.length + ' منتج', 'success');
         }
 
-        function checkAllProcessed(data, processed, total) {
-            console.log('Processed:', processed, 'of', total);
-            if (processed >= total) {
-                setData(data);
-                const totalProducts = Object.values(data.products).flat().length;
-                const totalProductsEl = document.getElementById('totalProducts');
-                if (totalProductsEl) totalProductsEl.textContent = totalProducts;
-                showAlert('✅ تم جلب ' + totalProducts + ' منتج', 'success');
-                if (!document.getElementById('products').classList.contains('hidden')) loadProducts();
-            }
-        }
+
 
         function loadProducts() {
             const data = getData();
