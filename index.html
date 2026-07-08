@@ -115,6 +115,7 @@
             border-right: 3px solid transparent;
             margin: 4px 0;
             color: var(--text);
+            user-select: none;
         }
 
         .nav-item:hover {
@@ -132,10 +133,12 @@
             font-size: 1.3em;
             width: 30px;
             text-align: center;
+            pointer-events: none;
         }
 
         .nav-item span {
             font-weight: 500;
+            pointer-events: none;
         }
 
         .status-panel {
@@ -165,6 +168,7 @@
             height: 10px;
             border-radius: 50%;
             animation: pulse 2s infinite;
+            flex-shrink: 0;
         }
 
         .status-dot.active { background: var(--success); }
@@ -338,6 +342,7 @@
             align-items: center;
             gap: 8px;
             margin: 5px;
+            position: relative;
         }
 
         .btn-primary {
@@ -932,7 +937,7 @@
 </head>
 <body>
     <div class="sidebar">
-        <div class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">
+        <div class="theme-toggle" id="themeToggle" title="تبديل الوضع">
             <span id="themeIcon">🌙</span>
         </div>
 
@@ -942,27 +947,27 @@
         </div>
 
         <nav>
-            <div class="nav-item active" onclick="showTab('dashboard', this)">
+            <div class="nav-item active" data-tab="dashboard">
                 <span>📊</span>
                 <span>لوحة التحكم</span>
             </div>
-            <div class="nav-item" onclick="showTab('sites', this)">
+            <div class="nav-item" data-tab="sites">
                 <span>🌐</span>
                 <span>المواقع</span>
             </div>
-            <div class="nav-item" onclick="showTab('products', this)">
+            <div class="nav-item" data-tab="products">
                 <span>📦</span>
                 <span>المنتجات</span>
             </div>
-            <div class="nav-item" onclick="showTab('comparison', this)">
+            <div class="nav-item" data-tab="comparison">
                 <span>⚖️</span>
                 <span>المقارنة</span>
             </div>
-            <div class="nav-item" onclick="showTab('telegram', this)">
+            <div class="nav-item" data-tab="telegram">
                 <span>📱</span>
                 <span>تلجرام</span>
             </div>
-            <div class="nav-item" onclick="showTab('logs', this)">
+            <div class="nav-item" data-tab="logs">
                 <span>📝</span>
                 <span>السجلات</span>
             </div>
@@ -991,12 +996,8 @@
             <div class="header-bar">
                 <h2>📊 لوحة التحكم</h2>
                 <div>
-                    <button class="btn btn-success" id="btnStart" onclick="startMonitoring()">
-                        <span>▶️ بدء</span>
-                    </button>
-                    <button class="btn btn-danger" id="btnStop" onclick="stopMonitoring()">
-                        <span>⏹️ إيقاف</span>
-                    </button>
+                    <button class="btn btn-success" id="btnStart">▶️ بدء</button>
+                    <button class="btn btn-danger" id="btnStop">⏹️ إيقاف</button>
                 </div>
             </div>
 
@@ -1026,14 +1027,12 @@
                     <div class="custom-interval">
                         <input type="number" id="intervalInput" value="1" min="1" max="1440" placeholder="1">
                         <label>دقيقة/دقائق</label>
-                        <button class="btn btn-primary" onclick="setCustomInterval()">💾 حفظ</button>
+                        <button class="btn btn-primary" id="btnSaveInterval">💾 حفظ</button>
                     </div>
                     <small>يمكنك تحديد أي عدد من الدقائق (1 - 1440)</small>
                 </div>
                 <div style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="checkNow()">
-                        <span>🔄 فحص فوري</span>
-                    </button>
+                    <button class="btn btn-primary" id="btnCheckNow">🔄 فحص فوري</button>
                 </div>
             </div>
 
@@ -1046,8 +1045,8 @@
                         <input type="text" id="workerUrlInput" placeholder="https://your-worker.your-subdomain.workers.dev" value="">
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-success" onclick="saveWorkerUrl()">💾 حفظ الرابط</button>
-                        <button class="btn btn-info" onclick="testWorkerConnection()">🧪 اختبار الاتصال</button>
+                        <button class="btn btn-success" id="btnSaveWorker">💾 حفظ الرابط</button>
+                        <button class="btn btn-info" id="btnTestWorker">🧪 اختبار الاتصال</button>
                     </div>
                     <div id="workerTestResult" style="margin-top: 15px; display: none;"></div>
                 </div>
@@ -1087,7 +1086,7 @@
                         <option value="custom">تنسيق مخصص (مصفوفة مباشرة)</option>
                     </select>
                 </div>
-                <button class="btn btn-success" onclick="addSite()">💾 حفظ الموقع</button>
+                <button class="btn btn-success" id="btnAddSite">💾 حفظ الموقع</button>
             </div>
 
             <div class="section">
@@ -1100,8 +1099,8 @@
             <div class="header-bar">
                 <h2>📦 المنتجات</h2>
                 <div>
-                    <button class="btn btn-primary" onclick="fetchAllProducts()">🔄 جلب المنتجات</button>
-                    <button class="btn btn-warning" onclick="exportProducts()">📥 تصدير CSV</button>
+                    <button class="btn btn-primary" id="btnFetchProducts">🔄 جلب المنتجات</button>
+                    <button class="btn btn-warning" id="btnExportProducts">📥 تصدير CSV</button>
                 </div>
             </div>
 
@@ -1131,16 +1130,16 @@
             <div class="section">
                 <div class="form-group">
                     <label>🔍 البحث عن منتج</label>
-                    <input type="text" id="compareSearch" placeholder="اكتب اسم المنتج..." onkeyup="filterComparison()">
+                    <input type="text" id="compareSearch" placeholder="اكتب اسم المنتج...">
                 </div>
 
                 <div class="form-group">
                     <label>💱 العملة المعروضة</label>
                     <div class="currency-selector">
-                        <button class="currency-btn active" onclick="setCurrency('USD', this)">💵 USD</button>
-                        <button class="currency-btn" onclick="setCurrency('SAR', this)">💴 SAR</button>
-                        <button class="currency-btn" onclick="setCurrency('AED', this)">💶 AED</button>
-                        <button class="currency-btn" onclick="setCurrency('EGP', this)">💷 EGP</button>
+                        <button class="currency-btn active" data-currency="USD">💵 USD</button>
+                        <button class="currency-btn" data-currency="SAR">💴 SAR</button>
+                        <button class="currency-btn" data-currency="AED">💶 AED</button>
+                        <button class="currency-btn" data-currency="EGP">💷 EGP</button>
                     </div>
                 </div>
 
@@ -1163,13 +1162,13 @@
                     <label>نص التوقيع</label>
                     <input type="text" id="signature" value="🤖 1Click Pay Monitor" placeholder="توقيعك">
                 </div>
-                <button class="btn btn-primary" onclick="saveBotConfig()">💾 حفظ إعدادات البوت</button>
+                <button class="btn btn-primary" id="btnSaveBot">💾 حفظ إعدادات البوت</button>
             </div>
 
             <div class="section">
                 <h3>👤 إدارة المستخدمين</h3>
                 <div id="telegramUsers"></div>
-                <button class="btn btn-success" onclick="addTelegramUser()" style="margin-top: 15px;">➕ إضافة مستخدم</button>
+                <button class="btn btn-success" id="btnAddUser" style="margin-top: 15px;">➕ إضافة مستخدم</button>
             </div>
         </div>
 
@@ -1177,8 +1176,8 @@
             <div class="header-bar">
                 <h2>📝 السجلات</h2>
                 <div>
-                    <button class="btn btn-danger" onclick="clearLogs()">🗑️ مسح</button>
-                    <button class="btn btn-primary" onclick="exportLogs()">📥 تصدير</button>
+                    <button class="btn btn-danger" id="btnClearLogs">🗑️ مسح</button>
+                    <button class="btn btn-primary" id="btnExportLogs">📥 تصدير</button>
                 </div>
             </div>
 
@@ -1187,7 +1186,7 @@
                     <div class="log-entry">
                         <span class="log-time">--:--</span>
                         <span class="log-type info">INFO</span>
-                        <span class="log-message">مرحباً بك في 1Click Pay Monitor v4.0</span>
+                        <span class="log-message">مرحباً بك في 1Click Pay Monitor v4.3</span>
                     </div>
                 </div>
             </div>
@@ -1211,8 +1210,8 @@
                 <input type="text" id="editSiteToken">
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn" onclick="closeModal()" style="background: #636e72;">إلغاء</button>
-                <button class="btn btn-success" onclick="updateSite()">حفظ</button>
+                <button class="btn" id="btnCancelEdit" style="background: #636e72;">إلغاء</button>
+                <button class="btn btn-success" id="btnUpdateSite">حفظ</button>
             </div>
         </div>
     </div>
@@ -1255,8 +1254,8 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button class="btn" onclick="closeUserModal()" style="background: #636e72;">إلغاء</button>
-                <button class="btn btn-success" onclick="saveTelegramUser()">حفظ</button>
+                <button class="btn" id="btnCancelUser" style="background: #636e72;">إلغاء</button>
+                <button class="btn btn-success" id="btnSaveUser">حفظ</button>
             </div>
         </div>
     </div>
@@ -1264,11 +1263,20 @@
     <script>
         const DB = {
             get(key) {
-                const data = localStorage.getItem(`1click_${key}`);
-                return data ? JSON.parse(data) : null;
+                try {
+                    const data = localStorage.getItem(`1click_${key}`);
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.error('DB get error:', e);
+                    return null;
+                }
             },
             set(key, value) {
-                localStorage.setItem(`1click_${key}`, JSON.stringify(value));
+                try {
+                    localStorage.setItem(`1click_${key}`, JSON.stringify(value));
+                } catch (e) {
+                    console.error('DB set error:', e);
+                }
             }
         };
 
@@ -1282,6 +1290,7 @@
         let currentCurrency = 'USD';
         let siteColors = {};
         let workerConnected = false;
+        let monitorInterval = null;
 
         function initData() {
             if (!DB.get('sites')) {
@@ -1317,7 +1326,8 @@
             const current = document.documentElement.getAttribute('data-theme') || 'dark';
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            document.getElementById('themeIcon').textContent = next === 'dark' ? '🌙' : '☀️';
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
 
             const settings = DB.get('settings') || {};
             settings.theme = next;
@@ -1328,20 +1338,28 @@
             const settings = DB.get('settings') || {};
             const theme = settings.theme || 'dark';
             document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('themeIcon').textContent = theme === 'dark' ? '🌙' : '☀️';
+            const icon = document.getElementById('themeIcon');
+            if (icon) icon.textContent = theme === 'dark' ? '🌙' : '☀️';
         }
 
         function showAlert(message, type = 'error', duration = 5000) {
             const box = document.getElementById('alertBox');
+            if (!box) return;
             box.className = `alert alert-${type}`;
             box.innerHTML = message;
             box.style.display = 'flex';
-            if (duration > 0) setTimeout(() => box.style.display = 'none', duration);
+            if (duration > 0) {
+                setTimeout(() => {
+                    if (box) box.style.display = 'none';
+                }, duration);
+            }
         }
 
         function showTab(tabName, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById(tabName).classList.remove('hidden');
+            const target = document.getElementById(tabName);
+            if (target) target.classList.remove('hidden');
+
             document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
             if (el) el.classList.add('active');
 
@@ -1377,13 +1395,15 @@
         function loadLogs() {
             const logs = DB.get('logs') || [];
             const container = document.getElementById('logsContainer');
-            container.innerHTML = logs.map(l => `
-                <div class="log-entry">
-                    <span class="log-time">${l.time}</span>
-                    <span class="log-type ${l.type}">${l.type.toUpperCase()}</span>
-                    <span class="log-message">${l.message}</span>
-                </div>
-            `).join('');
+            if (container) {
+                container.innerHTML = logs.map(l => `
+                    <div class="log-entry">
+                        <span class="log-time">${l.time}</span>
+                        <span class="log-type ${l.type}">${l.type.toUpperCase()}</span>
+                        <span class="log-message">${l.message}</span>
+                    </div>
+                `).join('');
+            }
         }
 
         function updateStatus() {
@@ -1393,20 +1413,24 @@
             const workerDot = document.getElementById('workerStatusDot');
             const workerText = document.getElementById('workerStatusText');
 
-            if (data.monitorActive) {
-                monitorDot.className = 'status-dot active';
-                monitorText.textContent = 'المراقبة نشطة';
-            } else {
-                monitorDot.className = 'status-dot inactive';
-                monitorText.textContent = 'المراقبة متوقفة';
+            if (monitorDot) {
+                if (data.monitorActive) {
+                    monitorDot.className = 'status-dot active';
+                    if (monitorText) monitorText.textContent = 'المراقبة نشطة';
+                } else {
+                    monitorDot.className = 'status-dot inactive';
+                    if (monitorText) monitorText.textContent = 'المراقبة متوقفة';
+                }
             }
 
-            if (workerConnected) {
-                workerDot.className = 'status-dot active';
-                workerText.textContent = 'الـ Worker متصل';
-            } else {
-                workerDot.className = 'status-dot inactive';
-                workerText.textContent = 'الـ Worker غير متصل';
+            if (workerDot) {
+                if (workerConnected) {
+                    workerDot.className = 'status-dot active';
+                    if (workerText) workerText.textContent = 'الـ Worker متصل';
+                } else {
+                    workerDot.className = 'status-dot inactive';
+                    if (workerText) workerText.textContent = 'الـ Worker غير متصل';
+                }
             }
         }
 
@@ -1440,7 +1464,10 @@
 
         // ========== WORKER FUNCTIONS ==========
         function saveWorkerUrl() {
-            const url = document.getElementById('workerUrlInput').value.trim();
+            const urlInput = document.getElementById('workerUrlInput');
+            if (!urlInput) return;
+
+            const url = urlInput.value.trim();
             if (!url) {
                 showAlert('❌ الرجاء إدخال رابط الـ Worker');
                 return;
@@ -1472,8 +1499,10 @@
             }
 
             const resultDiv = document.getElementById('workerTestResult');
-            resultDiv.style.display = 'block';
-            resultDiv.innerHTML = '<div class="loading-spinner"></div> جاري الاختبار...';
+            if (resultDiv) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '<div class="loading-spinner" style="display:inline-block;vertical-align:middle;margin-left:10px;"></div> جاري الاختبار...';
+            }
 
             try {
                 const response = await fetch(`${workerUrl}/api/status`, {
@@ -1484,16 +1513,22 @@
                 if (response.ok) {
                     const data = await response.json();
                     workerConnected = true;
-                    resultDiv.innerHTML = '<span style="color: var(--success)">✅ الاتصال ناجح! الـ Worker يعمل بشكل صحيح</span>';
+                    if (resultDiv) {
+                        resultDiv.innerHTML = '<span style="color: var(--success)">✅ الاتصال ناجح! الـ Worker يعمل بشكل صحيح</span>';
+                    }
                     log('✅ اختبار الـ Worker ناجح', 'success');
                 } else {
                     workerConnected = false;
-                    resultDiv.innerHTML = `<span style="color: var(--danger)">❌ فشل الاتصال: HTTP ${response.status}</span>`;
+                    if (resultDiv) {
+                        resultDiv.innerHTML = `<span style="color: var(--danger)">❌ فشل الاتصال: HTTP ${response.status}</span>`;
+                    }
                     log('❌ فشل اختبار الـ Worker', 'error');
                 }
             } catch (err) {
                 workerConnected = false;
-                resultDiv.innerHTML = `<span style="color: var(--danger)">❌ خطأ في الاتصال: ${err.message}</span>`;
+                if (resultDiv) {
+                    resultDiv.innerHTML = `<span style="color: var(--danger)">❌ خطأ في الاتصال: ${err.message}</span>`;
+                }
                 log(`❌ خطأ في الاتصال بالـ Worker: ${err.message}`, 'error');
             }
 
@@ -1508,20 +1543,22 @@
             const statusDesc = document.getElementById('workerStatusDesc');
             const configBox = document.getElementById('workerConfigBox');
 
-            if (workerUrl) {
-                if (workerConnected) {
-                    statusBox.classList.add('worker-connected');
-                    statusDesc.textContent = `متصل: ${workerUrl}`;
-                    configBox.classList.add('worker-connected');
+            if (statusBox && statusDesc) {
+                if (workerUrl) {
+                    if (workerConnected) {
+                        statusBox.classList.add('worker-connected');
+                        statusDesc.textContent = `متصل: ${workerUrl}`;
+                        if (configBox) configBox.classList.add('worker-connected');
+                    } else {
+                        statusBox.classList.remove('worker-connected');
+                        statusDesc.textContent = `غير متصل: ${workerUrl} - اضغط اختبار الاتصال`;
+                        if (configBox) configBox.classList.remove('worker-connected');
+                    }
                 } else {
                     statusBox.classList.remove('worker-connected');
-                    statusDesc.textContent = `غير متصل: ${workerUrl} - اضغط اختبار الاتصال`;
-                    configBox.classList.remove('worker-connected');
+                    statusDesc.textContent = 'غير مربط - أدخل رابط الـ Worker أعلاه';
+                    if (configBox) configBox.classList.remove('worker-connected');
                 }
-            } else {
-                statusBox.classList.remove('worker-connected');
-                statusDesc.textContent = 'غير مربط - أدخل رابط الـ Worker أعلاه';
-                configBox.classList.remove('worker-connected');
             }
         }
 
@@ -1556,37 +1593,60 @@
             }
         }
 
+        // ========== SITES ==========
         function loadSites() {
             const data = getData();
             const container = document.getElementById('sitesList');
-            document.getElementById('totalSites').textContent = data.sites.length;
+            const totalSitesEl = document.getElementById('totalSites');
+            if (totalSitesEl) totalSitesEl.textContent = data.sites.length;
 
-            container.innerHTML = data.sites.map(site => `
-                <div class="site-card ${site.active ? '' : 'inactive'}">
-                    <div class="site-info">
-                        <h4>${site.name} ${site.active ? '🟢' : '🔴'}</h4>
-                        <p>${site.url}</p>
-                        <p style="font-size: 0.8em; margin-top: 5px;">
-                            التوكن: ${site.token ? '✅' : '❌'} | 
-                            المنتجات: ${(data.products[site.id] || []).length}
-                        </p>
+            if (container) {
+                container.innerHTML = data.sites.map(site => `
+                    <div class="site-card ${site.active ? '' : 'inactive'}">
+                        <div class="site-info">
+                            <h4>${site.name} ${site.active ? '🟢' : '🔴'}</h4>
+                            <p>${site.url}</p>
+                            <p style="font-size: 0.8em; margin-top: 5px;">
+                                التوكن: ${site.token ? '✅' : '❌'} | 
+                                المنتجات: ${(data.products[site.id] || []).length}
+                            </p>
+                        </div>
+                        <div class="site-actions">
+                            <button class="btn btn-primary" data-action="edit" data-id="${site.id}">✏️</button>
+                            <button class="btn ${site.active ? 'btn-danger' : 'btn-success'}" data-action="toggle" data-id="${site.id}">${site.active ? '⏸️' : '▶️'}</button>
+                            <button class="btn btn-danger" data-action="delete" data-id="${site.id}">🗑️</button>
+                        </div>
                     </div>
-                    <div class="site-actions">
-                        <button class="btn btn-primary" onclick="editSite(${site.id})">✏️</button>
-                        <button class="btn ${site.active ? 'btn-danger' : 'btn-success'}" onclick="toggleSite(${site.id})">
-                            ${site.active ? '⏸️' : '▶️'}
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteSite(${site.id})">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+
+                // Add event listeners to site action buttons
+                container.querySelectorAll('.site-actions .btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const action = this.getAttribute('data-action');
+                        const id = parseInt(this.getAttribute('data-id'));
+
+                        if (action === 'edit') editSite(id);
+                        else if (action === 'toggle') toggleSite(id);
+                        else if (action === 'delete') deleteSite(id);
+                    });
+                });
+            }
         }
 
         function addSite() {
-            const name = document.getElementById('siteName').value.trim();
-            const url = document.getElementById('siteUrl').value.trim();
-            const token = document.getElementById('siteToken').value.trim();
-            const format = document.getElementById('siteFormat').value;
+            const nameInput = document.getElementById('siteName');
+            const urlInput = document.getElementById('siteUrl');
+            const tokenInput = document.getElementById('siteToken');
+            const formatInput = document.getElementById('siteFormat');
+
+            if (!nameInput || !urlInput) return;
+
+            const name = nameInput.value.trim();
+            const url = urlInput.value.trim();
+            const token = tokenInput ? tokenInput.value.trim() : '';
+            const format = formatInput ? formatInput.value : 'sahl';
 
             if (!name || !url) {
                 showAlert('❌ الرجاء ملء اسم الموقع والرابط');
@@ -1611,9 +1671,9 @@
             });
             setData(data);
 
-            document.getElementById('siteName').value = '';
-            document.getElementById('siteUrl').value = '';
-            document.getElementById('siteToken').value = '';
+            nameInput.value = '';
+            if (urlInput) urlInput.value = '';
+            if (tokenInput) tokenInput.value = '';
 
             log(`✅ تم إضافة الموقع: ${name}`, 'success');
             loadSites();
@@ -1625,22 +1685,36 @@
             const site = data.sites.find(s => s.id === id);
             if (!site) return;
 
-            document.getElementById('editSiteId').value = id;
-            document.getElementById('editSiteName').value = site.name;
-            document.getElementById('editSiteUrl').value = site.url;
-            document.getElementById('editSiteToken').value = site.token;
-            document.getElementById('editModal').classList.add('active');
+            const editId = document.getElementById('editSiteId');
+            const editName = document.getElementById('editSiteName');
+            const editUrl = document.getElementById('editSiteUrl');
+            const editToken = document.getElementById('editSiteToken');
+            const modal = document.getElementById('editModal');
+
+            if (editId) editId.value = id;
+            if (editName) editName.value = site.name;
+            if (editUrl) editUrl.value = site.url;
+            if (editToken) editToken.value = site.token;
+            if (modal) modal.classList.add('active');
         }
 
         function updateSite() {
-            const id = parseInt(document.getElementById('editSiteId').value);
+            const editId = document.getElementById('editSiteId');
+            if (!editId) return;
+
+            const id = parseInt(editId.value);
             const data = getData();
             const site = data.sites.find(s => s.id === id);
 
             if (site) {
-                site.name = document.getElementById('editSiteName').value;
-                site.url = document.getElementById('editSiteUrl').value;
-                site.token = document.getElementById('editSiteToken').value;
+                const editName = document.getElementById('editSiteName');
+                const editUrl = document.getElementById('editSiteUrl');
+                const editToken = document.getElementById('editSiteToken');
+
+                if (editName) site.name = editName.value;
+                if (editUrl) site.url = editUrl.value;
+                if (editToken) site.token = editToken.value;
+
                 setData(data);
                 log(`✏️ تم تعديل الموقع: ${site.name}`, 'info');
             }
@@ -1650,7 +1724,8 @@
         }
 
         function closeModal() {
-            document.getElementById('editModal').classList.remove('active');
+            const modal = document.getElementById('editModal');
+            if (modal) modal.classList.remove('active');
         }
 
         function toggleSite(id) {
@@ -1674,6 +1749,7 @@
             loadSites();
         }
 
+        // ========== PRODUCTS ==========
         async function fetchAllProducts() {
             const data = getData();
             const activeSites = data.sites.filter(s => s.active);
@@ -1682,11 +1758,6 @@
                 showAlert('❌ لا توجد مواقع مفعلة');
                 return;
             }
-
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<div class="loading-spinner"></div> جاري الجلب...';
-            btn.disabled = true;
 
             log('🔄 جاري جلب المنتجات...', 'info');
 
@@ -1735,10 +1806,8 @@
             setData(data);
 
             const totalProducts = Object.values(data.products).flat().length;
-            document.getElementById('totalProducts').textContent = totalProducts;
-
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            const totalProductsEl = document.getElementById('totalProducts');
+            if (totalProductsEl) totalProductsEl.textContent = totalProducts;
 
             showAlert(`✅ تم جلب ${totalProducts} منتج بنجاح!`, 'success');
 
@@ -1750,6 +1819,8 @@
         function loadProducts() {
             const data = getData();
             const tbody = document.getElementById('productsTable');
+            if (!tbody) return;
+
             let html = '';
             let total = 0;
 
@@ -1778,13 +1849,16 @@
             }
 
             tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; padding: 50px;"><div class="empty-state">لا توجد منتجات</div></td></tr>';
-            document.getElementById('totalProducts').textContent = total;
+
+            const totalProductsEl = document.getElementById('totalProducts');
+            if (totalProductsEl) totalProductsEl.textContent = total;
         }
 
+        // ========== COMPARISON ==========
         function setCurrency(currency, btn) {
             currentCurrency = currency;
             document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            if (btn) btn.classList.add('active');
             loadComparison();
         }
 
@@ -1801,6 +1875,8 @@
         function loadComparison() {
             const data = getData();
             const container = document.getElementById('comparisonContainer');
+            if (!container) return;
+
             const groups = {};
 
             for (const [siteId, siteProducts] of Object.entries(data.products)) {
@@ -1904,17 +1980,29 @@
         }
 
         function filterComparison() {
-            const search = document.getElementById('compareSearch').value.toLowerCase();
+            const searchInput = document.getElementById('compareSearch');
+            if (!searchInput) return;
+
+            const search = searchInput.value.toLowerCase();
             document.querySelectorAll('.comparison-product').forEach(card => {
-                const name = card.querySelector('h4').textContent.toLowerCase();
-                card.style.display = name.includes(search) ? 'block' : 'none';
+                const h4 = card.querySelector('h4');
+                if (h4) {
+                    const name = h4.textContent.toLowerCase();
+                    card.style.display = name.includes(search) ? 'block' : 'none';
+                }
             });
         }
 
+        // ========== TELEGRAM ==========
         function saveBotConfig() {
+            const botToken = document.getElementById('botToken');
+            const signature = document.getElementById('signature');
+
+            if (!botToken || !signature) return;
+
             const telegram = DB.get('telegram') || {};
-            telegram.botToken = document.getElementById('botToken').value.trim();
-            telegram.signature = document.getElementById('signature').value.trim();
+            telegram.botToken = botToken.value.trim();
+            telegram.signature = signature.value.trim();
             DB.set('telegram', telegram);
             showAlert('✅ تم حفظ إعدادات البوت', 'success');
             log('💾 تم حفظ إعدادات البوت', 'success');
@@ -1923,6 +2011,7 @@
         function loadTelegramUsers() {
             const telegram = DB.get('telegram') || { users: [] };
             const container = document.getElementById('telegramUsers');
+            if (!container) return;
 
             container.innerHTML = telegram.users.map((user, index) => `
                 <div class="telegram-user">
@@ -1932,8 +2021,8 @@
                             <p>Chat ID: ${user.chatId}</p>
                         </div>
                         <div class="site-actions">
-                            <button class="btn btn-primary" onclick="editTelegramUser(${index})">✏️</button>
-                            <button class="btn btn-danger" onclick="deleteTelegramUser(${index})">🗑️</button>
+                            <button class="btn btn-primary" data-action="edit-user" data-index="${index}">✏️</button>
+                            <button class="btn btn-danger" data-action="delete-user" data-index="${index}">🗑️</button>
                         </div>
                     </div>
                     <div class="notification-types" style="display: flex; flex-wrap: wrap; gap: 8px;">
@@ -1945,18 +2034,41 @@
                     </div>
                 </div>
             `).join('');
+
+            // Add event listeners to user action buttons
+            container.querySelectorAll('.site-actions .btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const action = this.getAttribute('data-action');
+                    const index = parseInt(this.getAttribute('data-index'));
+
+                    if (action === 'edit-user') editTelegramUser(index);
+                    else if (action === 'delete-user') deleteTelegramUser(index);
+                });
+            });
         }
 
         function addTelegramUser() {
-            document.getElementById('editUserId').value = '-1';
-            document.getElementById('userName').value = '';
-            document.getElementById('userChatId').value = '';
-            document.getElementById('userPriceDrop').checked = true;
-            document.getElementById('userPriceRise').checked = true;
-            document.getElementById('userBestPrice').checked = true;
-            document.getElementById('userOutOfStock').checked = false;
-            document.getElementById('userBackInStock').checked = false;
-            document.getElementById('userModal').classList.add('active');
+            const editUserId = document.getElementById('editUserId');
+            const userName = document.getElementById('userName');
+            const userChatId = document.getElementById('userChatId');
+            const userPriceDrop = document.getElementById('userPriceDrop');
+            const userPriceRise = document.getElementById('userPriceRise');
+            const userBestPrice = document.getElementById('userBestPrice');
+            const userOutOfStock = document.getElementById('userOutOfStock');
+            const userBackInStock = document.getElementById('userBackInStock');
+            const modal = document.getElementById('userModal');
+
+            if (editUserId) editUserId.value = '-1';
+            if (userName) userName.value = '';
+            if (userChatId) userChatId.value = '';
+            if (userPriceDrop) userPriceDrop.checked = true;
+            if (userPriceRise) userPriceRise.checked = true;
+            if (userBestPrice) userBestPrice.checked = true;
+            if (userOutOfStock) userOutOfStock.checked = false;
+            if (userBackInStock) userBackInStock.checked = false;
+            if (modal) modal.classList.add('active');
         }
 
         function editTelegramUser(index) {
@@ -1964,30 +2076,51 @@
             const user = telegram.users[index];
             if (!user) return;
 
-            document.getElementById('editUserId').value = index;
-            document.getElementById('userName').value = user.name;
-            document.getElementById('userChatId').value = user.chatId;
-            document.getElementById('userPriceDrop').checked = user.notifications.priceDrop;
-            document.getElementById('userPriceRise').checked = user.notifications.priceRise;
-            document.getElementById('userBestPrice').checked = user.notifications.bestPrice;
-            document.getElementById('userOutOfStock').checked = user.notifications.outOfStock;
-            document.getElementById('userBackInStock').checked = user.notifications.backInStock;
-            document.getElementById('userModal').classList.add('active');
+            const editUserId = document.getElementById('editUserId');
+            const userName = document.getElementById('userName');
+            const userChatId = document.getElementById('userChatId');
+            const userPriceDrop = document.getElementById('userPriceDrop');
+            const userPriceRise = document.getElementById('userPriceRise');
+            const userBestPrice = document.getElementById('userBestPrice');
+            const userOutOfStock = document.getElementById('userOutOfStock');
+            const userBackInStock = document.getElementById('userBackInStock');
+            const modal = document.getElementById('userModal');
+
+            if (editUserId) editUserId.value = index;
+            if (userName) userName.value = user.name;
+            if (userChatId) userChatId.value = user.chatId;
+            if (userPriceDrop) userPriceDrop.checked = user.notifications.priceDrop;
+            if (userPriceRise) userPriceRise.checked = user.notifications.priceRise;
+            if (userBestPrice) userBestPrice.checked = user.notifications.bestPrice;
+            if (userOutOfStock) userOutOfStock.checked = user.notifications.outOfStock;
+            if (userBackInStock) userBackInStock.checked = user.notifications.backInStock;
+            if (modal) modal.classList.add('active');
         }
 
         function saveTelegramUser() {
             const telegram = DB.get('telegram') || { users: [] };
-            const index = parseInt(document.getElementById('editUserId').value);
+            const editUserId = document.getElementById('editUserId');
+            if (!editUserId) return;
+
+            const index = parseInt(editUserId.value);
+
+            const userName = document.getElementById('userName');
+            const userChatId = document.getElementById('userChatId');
+            const userPriceDrop = document.getElementById('userPriceDrop');
+            const userPriceRise = document.getElementById('userPriceRise');
+            const userBestPrice = document.getElementById('userBestPrice');
+            const userOutOfStock = document.getElementById('userOutOfStock');
+            const userBackInStock = document.getElementById('userBackInStock');
 
             const userData = {
-                name: document.getElementById('userName').value.trim(),
-                chatId: document.getElementById('userChatId').value.trim(),
+                name: userName ? userName.value.trim() : '',
+                chatId: userChatId ? userChatId.value.trim() : '',
                 notifications: {
-                    priceDrop: document.getElementById('userPriceDrop').checked,
-                    priceRise: document.getElementById('userPriceRise').checked,
-                    bestPrice: document.getElementById('userBestPrice').checked,
-                    outOfStock: document.getElementById('userOutOfStock').checked,
-                    backInStock: document.getElementById('userBackInStock').checked
+                    priceDrop: userPriceDrop ? userPriceDrop.checked : true,
+                    priceRise: userPriceRise ? userPriceRise.checked : true,
+                    bestPrice: userBestPrice ? userBestPrice.checked : true,
+                    outOfStock: userOutOfStock ? userOutOfStock.checked : false,
+                    backInStock: userBackInStock ? userBackInStock.checked : false
                 }
             };
 
@@ -2021,11 +2154,16 @@
         }
 
         function closeUserModal() {
-            document.getElementById('userModal').classList.remove('active');
+            const modal = document.getElementById('userModal');
+            if (modal) modal.classList.remove('active');
         }
 
+        // ========== MONITORING ==========
         function setCustomInterval() {
-            const minutes = parseInt(document.getElementById('intervalInput').value);
+            const intervalInput = document.getElementById('intervalInput');
+            if (!intervalInput) return;
+
+            const minutes = parseInt(intervalInput.value);
             if (minutes < 1 || minutes > 1440) {
                 showAlert('❌ يجب أن تكون القيمة بين 1 و 1440 دقيقة');
                 return;
@@ -2044,7 +2182,7 @@
             const settings = DB.get('settings') || {};
             const telegram = DB.get('telegram') || {};
 
-            if (!telegram.botToken || telegram.users.length === 0) {
+            if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
                 showAlert('❌ أكمل إعدادات تلجرام أولاً', 'error');
                 return;
             }
@@ -2072,25 +2210,16 @@
             }
 
             // Fallback to local monitoring
-            const btn = document.getElementById('btnStart');
-            btn.innerHTML = '<div class="loading-spinner"></div>';
-            btn.disabled = true;
-
             log('▶️ تم تفعيل المراقبة المحلية', 'success');
 
             data.monitorActive = true;
             setData(data);
             updateStatus();
 
-            btn.innerHTML = '<span>▶️ بدء</span>';
-            btn.disabled = false;
-
             showAlert('✅ تم تفعيل المراقبة المحلية!', 'success', 8000);
 
             startMonitorLoop();
         }
-
-        let monitorInterval = null;
 
         function startMonitorLoop() {
             const settings = DB.get('settings') || {};
@@ -2102,6 +2231,7 @@
                 const data = getData();
                 if (!data.monitorActive) {
                     clearInterval(monitorInterval);
+                    monitorInterval = null;
                     return;
                 }
 
@@ -2138,7 +2268,9 @@
         async function checkNow() {
             log('🔄 فحص فوري...', 'info');
             await fetchAllProducts();
-            document.getElementById('lastCheck').textContent = new Date().toLocaleTimeString('ar-SA');
+
+            const lastCheckEl = document.getElementById('lastCheck');
+            if (lastCheckEl) lastCheckEl.textContent = new Date().toLocaleTimeString('ar-SA');
 
             checkPriceChanges();
         }
@@ -2147,7 +2279,7 @@
             const data = getData();
             const telegram = DB.get('telegram') || {};
 
-            if (!telegram.botToken || telegram.users.length === 0) return;
+            if (!telegram.botToken || !telegram.users || telegram.users.length === 0) return;
 
             let changesCount = 0;
 
@@ -2217,7 +2349,8 @@ ${product.name}
             data.history = newHistory.slice(-5000);
             setData(data);
 
-            document.getElementById('priceChanges').textContent = changesCount;
+            const priceChangesEl = document.getElementById('priceChanges');
+            if (priceChangesEl) priceChangesEl.textContent = changesCount;
         }
 
         async function sendTelegramNotification(chatId, message) {
@@ -2232,7 +2365,7 @@ ${product.name}
                         chat_id: chatId,
                         text: message + `
 
-${telegram.signature}`,
+${telegram.signature || '🤖 1Click Pay Monitor'}`,
                         parse_mode: 'HTML'
                     })
                 });
@@ -2241,6 +2374,7 @@ ${telegram.signature}`,
             }
         }
 
+        // ========== UTILITIES ==========
         function exportProducts() {
             const data = getData();
             let csv = 'المنتج,الموقع,السعر,الحالة,الفئة
@@ -2276,24 +2410,125 @@ ${telegram.signature}`,
             loadLogs();
         }
 
+        // ========== EVENT LISTENERS SETUP ==========
+        function setupEventListeners() {
+            // Navigation items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    const tabName = this.getAttribute('data-tab');
+                    if (tabName) showTab(tabName, this);
+                });
+            });
+
+            // Theme toggle
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
+            // Dashboard buttons
+            const btnStart = document.getElementById('btnStart');
+            if (btnStart) btnStart.addEventListener('click', startMonitoring);
+
+            const btnStop = document.getElementById('btnStop');
+            if (btnStop) btnStop.addEventListener('click', stopMonitoring);
+
+            const btnSaveInterval = document.getElementById('btnSaveInterval');
+            if (btnSaveInterval) btnSaveInterval.addEventListener('click', setCustomInterval);
+
+            const btnCheckNow = document.getElementById('btnCheckNow');
+            if (btnCheckNow) btnCheckNow.addEventListener('click', checkNow);
+
+            // Worker buttons
+            const btnSaveWorker = document.getElementById('btnSaveWorker');
+            if (btnSaveWorker) btnSaveWorker.addEventListener('click', saveWorkerUrl);
+
+            const btnTestWorker = document.getElementById('btnTestWorker');
+            if (btnTestWorker) btnTestWorker.addEventListener('click', testWorkerConnection);
+
+            // Sites buttons
+            const btnAddSite = document.getElementById('btnAddSite');
+            if (btnAddSite) btnAddSite.addEventListener('click', addSite);
+
+            // Products buttons
+            const btnFetchProducts = document.getElementById('btnFetchProducts');
+            if (btnFetchProducts) btnFetchProducts.addEventListener('click', fetchAllProducts);
+
+            const btnExportProducts = document.getElementById('btnExportProducts');
+            if (btnExportProducts) btnExportProducts.addEventListener('click', exportProducts);
+
+            // Comparison search
+            const compareSearch = document.getElementById('compareSearch');
+            if (compareSearch) compareSearch.addEventListener('keyup', filterComparison);
+
+            // Currency buttons
+            document.querySelectorAll('.currency-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const currency = this.getAttribute('data-currency');
+                    if (currency) setCurrency(currency, this);
+                });
+            });
+
+            // Telegram buttons
+            const btnSaveBot = document.getElementById('btnSaveBot');
+            if (btnSaveBot) btnSaveBot.addEventListener('click', saveBotConfig);
+
+            const btnAddUser = document.getElementById('btnAddUser');
+            if (btnAddUser) btnAddUser.addEventListener('click', addTelegramUser);
+
+            // Logs buttons
+            const btnClearLogs = document.getElementById('btnClearLogs');
+            if (btnClearLogs) btnClearLogs.addEventListener('click', clearLogs);
+
+            const btnExportLogs = document.getElementById('btnExportLogs');
+            if (btnExportLogs) btnExportLogs.addEventListener('click', exportLogs);
+
+            // Modal buttons
+            const btnCancelEdit = document.getElementById('btnCancelEdit');
+            if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeModal);
+
+            const btnUpdateSite = document.getElementById('btnUpdateSite');
+            if (btnUpdateSite) btnUpdateSite.addEventListener('click', updateSite);
+
+            const btnCancelUser = document.getElementById('btnCancelUser');
+            if (btnCancelUser) btnCancelUser.addEventListener('click', closeUserModal);
+
+            const btnSaveUser = document.getElementById('btnSaveUser');
+            if (btnSaveUser) btnSaveUser.addEventListener('click', saveTelegramUser);
+
+            // Close modal on outside click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('active');
+                    }
+                });
+            });
+        }
+
+        // ========== INIT ==========
         window.onload = function() {
             initData();
             loadTheme();
+            setupEventListeners();
 
             const data = getData();
             const telegram = DB.get('telegram') || {};
             const settings = DB.get('settings') || {};
 
-            document.getElementById('botToken').value = telegram.botToken || '';
-            document.getElementById('signature').value = telegram.signature || '';
-            document.getElementById('intervalInput').value = settings.interval || 1;
-            document.getElementById('workerUrlInput').value = settings.workerUrl || '';
+            const botToken = document.getElementById('botToken');
+            const signature = document.getElementById('signature');
+            const intervalInput = document.getElementById('intervalInput');
+            const workerUrlInput = document.getElementById('workerUrlInput');
+
+            if (botToken) botToken.value = telegram.botToken || '';
+            if (signature) signature.value = telegram.signature || '';
+            if (intervalInput) intervalInput.value = settings.interval || 1;
+            if (workerUrlInput) workerUrlInput.value = settings.workerUrl || '';
 
             updateWorkerStatus();
             updateStatus();
             loadSites();
 
-            log('🚀 تم تشغيل النظام - v4.0', 'success');
+            log('🚀 تم تشغيل النظام - v4.3', 'success');
 
             if (data.monitorActive) {
                 startMonitorLoop();
