@@ -124,6 +124,9 @@
         [data-theme="light"] .summary-card { background: rgba(255,255,255,0.6); }
         .summary-card .label { font-size: 0.85em; color: var(--text-muted); margin-bottom: 5px; }
         .summary-card .value { font-size: 1.3em; font-weight: bold; color: var(--primary); }
+        .currency-selector { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .currency-btn { padding: 8px 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; font-weight: 600; }
+        .currency-btn.active { border-color: var(--primary); background: rgba(0, 212, 255, 0.1); color: var(--primary); }
         .telegram-user { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
         [data-theme="light"] .telegram-user { background: rgba(255,255,255,0.6); }
         .telegram-user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
@@ -213,6 +216,8 @@
             .notification-grid { grid-template-columns: 1fr; }
             .modal-content { padding: 20px; border-radius: 16px; }
             .btn { padding: 10px 20px; font-size: 0.9em; }
+            .currency-selector { gap: 6px; }
+            .currency-btn { padding: 6px 12px; font-size: 0.85em; }
             .custom-interval { flex-direction: column; align-items: flex-start; }
             .custom-interval input[type="number"] { width: 100%; }
         }
@@ -227,6 +232,8 @@
         }
         .sidebar-overlay.active { display: block; }
     </style>
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
     <div class="mobile-menu-btn" id="mobileMenuBtn">☰</div>
@@ -245,6 +252,7 @@
             <div class="nav-item" data-tab="telegram">📱 تلجرام</div>
             <div class="nav-item" data-tab="worker">🔗 Worker</div>
             <div class="nav-item" data-tab="logs">📝 السجلات</div>
+<div class="nav-item" data-tab="exchange">💱 أسعار الصرف</div>
         </nav>
         <div class="status-panel">
             <div class="status-item">
@@ -379,6 +387,15 @@
                         <option value="all">جميع الأقسام</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>💱 العملة المعروضة</label>
+                    <div class="currency-selector">
+                        <button class="currency-btn active" data-currency="USD">💵 USD</button>
+                        <button class="currency-btn" data-currency="SAR">💴 SAR</button>
+                        <button class="currency-btn" data-currency="AED">💶 AED</button>
+                        <button class="currency-btn" data-currency="EGP">💷 EGP</button>
+                    </div>
+                </div>
                 <div class="comparison-container" id="comparisonContainer"></div>
             </div>
         </div>
@@ -463,7 +480,71 @@
         </div>
     </div>
 
-    <div class="modal" id="editModal">
+            <div id="exchange" class="tab-content hidden">
+            <div class="header-bar"><h2>💱 إدارة أسعار الصرف</h2></div>
+            <div class="section">
+                <h3>💱 أسعار الصرف الحالية</h3>
+                <p style="color:var(--text-muted);margin-bottom:20px;">يتم استخدام هذه الأسعار لتحويل وعرض الأسعار بأي عملة تختارها في قسم المقارنة</p>
+                <div class="stats-grid" id="exchangeRatesGrid">
+                    <div class="stat-card">
+                        <h3 style="font-size:1.8em;">💵 USD</h3>
+                        <p>الدولار الأمريكي</p>
+                        <div style="margin-top:10px;font-size:1.4em;color:var(--primary);font-weight:bold;">1.00</div>
+                        <p style="font-size:0.8em;margin-top:5px;">العملة الأساسية</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 style="font-size:1.8em;">💴 SAR</h3>
+                        <p>الريال السعودي</p>
+                        <div style="margin-top:10px;font-size:1.4em;color:var(--primary);font-weight:bold;" id="rateSAR">3.75</div>
+                        <p style="font-size:0.8em;margin-top:5px;">للـ 1 دولار</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 style="font-size:1.8em;">💶 AED</h3>
+                        <p>الدرهم الإماراتي</p>
+                        <div style="margin-top:10px;font-size:1.4em;color:var(--primary);font-weight:bold;" id="rateAED">3.67</div>
+                        <p style="font-size:0.8em;margin-top:5px;">للـ 1 دولار</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 style="font-size:1.8em;">💷 EGP</h3>
+                        <p>الجنيه المصري</p>
+                        <div style="margin-top:10px;font-size:1.4em;color:var(--primary);font-weight:bold;" id="rateEGP">30.90</div>
+                        <p style="font-size:0.8em;margin-top:5px;">للـ 1 دولار</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h3>⚙️ تعديل أسعار الصرف</h3>
+                <div class="form-group">
+                    <label>💴 SAR (ريال سعودي) - مقابل 1 دولار</label>
+                    <input type="number" id="editRateSAR" value="3.75" step="0.01" min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>💶 AED (درهم إماراتي) - مقابل 1 دولار</label>
+                    <input type="number" id="editRateAED" value="3.67" step="0.01" min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>💷 EGP (جنيه مصري) - مقابل 1 دولار</label>
+                    <input type="number" id="editRateEGP" value="30.90" step="0.01" min="0.01">
+                </div>
+                <button class="btn btn-success" id="btnSaveRates">💾 حفظ أسعار الصرف</button>
+                <button class="btn btn-primary" id="btnResetRates">🔄 استعادة الافتراضي</button>
+            </div>
+            <div class="section">
+                <h3>🧮 اختبار التحويل</h3>
+                <div class="form-group">
+                    <label>المبلغ بالدولار</label>
+                    <input type="number" id="testAmount" value="100" step="0.01">
+                </div>
+                <div class="stats-grid" style="margin-top:20px;">
+                    <div class="stat-card"><h3 id="testUSD">$100.00</h3><p>USD</p></div>
+                    <div class="stat-card"><h3 id="testSAR">ر.س 375.00</h3><p>SAR</p></div>
+                    <div class="stat-card"><h3 id="testAED">د.إ 367.00</h3><p>AED</p></div>
+                    <div class="stat-card"><h3 id="testEGP">ج.م 3,090.00</h3><p>EGP</p></div>
+                </div>
+            </div>
+        </div>
+
+<div class="modal" id="editModal">
         <div class="modal-content">
             <h3 style="color:var(--primary);margin-bottom:20px;">✏️ تعديل موقع</h3>
             <input type="hidden" id="editSiteId">
@@ -542,14 +623,6 @@
                         <input type="checkbox" id="userBackInStock">
                         <label for="userBackInStock">✅ توفر المنتج</label>
                     </div>
-                    <div class="notif-item" data-check="userNewProduct">
-                        <input type="checkbox" id="userNewProduct" checked>
-                        <label for="userNewProduct">🆕 منتج جديد</label>
-                    </div>
-                    <div class="notif-item" data-check="userComparison">
-                        <input type="checkbox" id="userComparison" checked>
-                        <label for="userComparison">⚖️ مقارنة الأسعار</label>
-                    </div>
                 </div>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
@@ -573,6 +646,8 @@
             }
         };
 
+        const exchangeRates = { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 };
+        let currentCurrency = 'USD';
         let siteColors = {};
         let workerConnected = false;
         let monitorInterval = null;
@@ -596,6 +671,9 @@
                 DB.set('settings', { interval: 1, theme: 'dark', workerUrl: '' });
             }
             if (!DB.get('logs')) DB.set('logs', []);
+            if (!DB.get('exchangeRates')) {
+                DB.set('exchangeRates', { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 });
+            }
             const savedWorkerConnected = DB.get('workerConnected');
             if (savedWorkerConnected !== null) workerConnected = savedWorkerConnected;
         }
@@ -658,6 +736,7 @@
             if (tabName === 'comparison') loadComparison();
             if (tabName === 'telegram') loadTelegramUsers();
             if (tabName === 'worker') loadWorkerStatus();
+            if (tabName === 'exchange') loadExchangeRates();
             if (tabName === 'logs') loadLogs();
         }
 
@@ -1031,12 +1110,11 @@
                     if (totalProductsEl) totalProductsEl.textContent = totalProducts;
                     showAlert('✅ تم جلب ' + totalProducts + ' منتج', 'success');
                     if (!document.getElementById('products').classList.contains('hidden')) loadProducts();
-                    // After all products fetched, check for changes and send notifications
-                    checkPriceChanges();
                 }
             }
 
             activeSites.forEach(function(site) {
+                // Try Worker first (bypasses CORS)
                 if (workerConnected && settings.workerUrl) {
                     log('🔄 جلب عبر Worker: ' + site.name, 'info');
                     fetchProductsViaWorker(site, data, function(success) {
@@ -1050,6 +1128,7 @@
                         }
                     });
                 } else {
+                    // No Worker, try direct (will likely fail due to CORS)
                     log('🔄 جلب مباشر: ' + site.name, 'info');
                     fetchProductsDirect(site, data, function() {
                         onSiteDone();
@@ -1167,12 +1246,78 @@
         }
 
         // ========== COMPARISON ==========
-        function loadComparison() {
+        function setCurrency(currency, btn) {
+            currentCurrency = currency;
+            document.querySelectorAll('.currency-btn').forEach(function(b) { b.classList.remove('active'); });
+            if (btn) btn.classList.add('active');
+            loadComparison();
+        }
+
+        function convertPrice(price) {
+            if (currentCurrency === 'USD') return price.toFixed(2);
+            return (price * exchangeRates[currentCurrency]).toFixed(2);
+        }
+
+        function getCurrencySymbol() {
+            const symbols = { USD: '$', SAR: 'ر.س', AED: 'د.إ', EGP: 'ج.م' };
+            return symbols[currentCurrency] || '$';
+        }
+
+        
+        // ========== TELEGRAM COMPARISON ==========
+        function sendComparisonToTelegram(productName, items) {
+            const telegram = DB.get('telegram') || {};
+            if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
+                showAlert('❌ أكمل إعدادات تلجرام أولاً', 'error'); return;
+            }
+            const prices = items.map(function(i) { return i.price; });
+            const minPrice = Math.min.apply(null, prices);
+            const maxPrice = Math.max.apply(null, prices);
+            const bestItem = items.find(function(i) { return i.price === minPrice; });
+            const worstItem = items.find(function(i) { return i.price === maxPrice; });
+            const savings = maxPrice - minPrice;
+            const savingsPercent = ((savings / maxPrice) * 100).toFixed(1);
+
+            let message = '📊 <b>مقارنة الأسعار</b>\n';
+            message += '━━━━━━━━━━━━━━━━━━━━━\n';
+            message += '🎮 <b>' + productName + '</b>\n\n';
+            message += '🏆 <b>أفضل سعر:</b>\n';
+            message += '💰 $' + minPrice.toFixed(2) + ' - ' + bestItem.siteName + '\n';
+            if (bestItem.rawPrice && bestItem.exchangeRate !== 1.0) {
+                message += '💱 ' + bestItem.rawPrice + ' ' + bestItem.exchangeCurrency + '\n';
+            }
+            message += '\n📈 <b>أعلى سعر:</b>\n';
+            message += '💰 $' + maxPrice.toFixed(2) + ' - ' + worstItem.siteName + '\n';
+            if (worstItem.rawPrice && worstItem.exchangeRate !== 1.0) {
+                message += '💱 ' + worstItem.rawPrice + ' ' + worstItem.exchangeCurrency + '\n';
+            }
+            message += '\n💸 <b>التوفير المحتمل:</b> $' + savings.toFixed(2) + ' (' + savingsPercent + '%)\n';
+            message += '\n📋 <b>جميع الأسعار:</b>\n';
+            items.forEach(function(item, idx) {
+                const isBest = item.price === minPrice;
+                const icon = isBest ? '🏆' : (item.price === maxPrice ? '📈' : '•');
+                message += icon + ' ' + item.siteName + ': $' + item.price.toFixed(2);
+                if (item.rawPrice && item.exchangeRate !== 1.0) {
+                    message += ' (' + item.rawPrice + ' ' + item.exchangeCurrency + ')';
+                }
+                message += ' ' + (item.available ? '🟢' : '🔴') + '\n';
+            });
+            message += '\n' + (telegram.signature || '🤖 1Click Pay Monitor');
+
+            telegram.users.forEach(function(user) {
+                sendTelegramNotification(user.chatId, message);
+            });
+            showAlert('✅ تم إرسال المقارنة للتلجرام', 'success');
+            log('📤 تم إرسال مقارنة للتلجرام: ' + productName, 'success');
+        }
+
+function loadComparison() {
             const data = getData();
             const container = document.getElementById('comparisonContainer');
             const categoryFilter = document.getElementById('compareCategoryFilter');
             if (!container) return;
 
+            // Collect all categories for the filter
             const allCategories = new Set();
             for (const siteId in data.products) {
                 const siteProducts = data.products[siteId];
@@ -1181,6 +1326,7 @@
                 });
             }
 
+            // Update category filter dropdown
             if (categoryFilter) {
                 const currentVal = categoryFilter.value;
                 let options = '<option value="all">جميع الأقسام</option>';
@@ -1227,18 +1373,20 @@
                     const isWorst = item.price === maxPrice && maxPrice !== minPrice;
                     const diff = (item.price - minPrice).toFixed(2);
                     const itemSavings = maxPrice === minPrice ? 0 : ((1 - item.price/maxPrice) * 100).toFixed(1);
+                    const convertedPrice = convertPrice(item.price);
+                    const symbol = getCurrencySymbol();
                     html += '<tr><td><span class="site-badge" style="background:' + item.siteColor + '20;color:' + item.siteColor + '"><span class="dot" style="background:' + item.siteColor + '"></span>' + item.siteName + '</span></td>' +
-                        '<td><span class="price-tag ' + (isBest ? 'best' : (isWorst ? 'high' : '')) + '">$' + item.price.toFixed(2) + (isBest ? ' 🏆' : '') + '</span></td>' +
-                        '<td>' + (isBest ? '<span class="winner-badge">✨ أفضل سعر</span>' : '<span style="color:var(--danger)">+$' + diff + '</span>') + '</td>' +
+                        '<td><span class="price-tag ' + (isBest ? 'best' : (isWorst ? 'high' : '')) + '">' + symbol + convertedPrice + (isBest ? ' 🏆' : '') + '</span></td>' +
+                        '<td>' + (isBest ? '<span class="winner-badge">✨ أفضل سعر</span>' : '<span style="color:var(--danger)">+' + symbol + convertPrice(parseFloat(diff)) + '</span>') + '</td>' +
                         '<td>' + (isBest ? '-' : '<span style="color:' + (itemSavings > 0 ? 'var(--success)' : 'var(--danger)') + '">' + itemSavings + '%</span>') + '</td>' +
                         '<td>' + (item.available ? '🟢' : '🔴') + '</td></tr>';
                 });
                 html += '</tbody></table>' +
                     '<div class="comparison-summary">' +
-                    '<div class="summary-card"><div class="label">💰 أقل سعر</div><div class="value" style="color:var(--success)">$' + minPrice.toFixed(2) + '</div><div style="font-size:0.8em;color:var(--text-muted);margin-top:5px;">' + bestSite.siteName + '</div></div>' +
-                    '<div class="summary-card"><div class="label">📈 أعلى سعر</div><div class="value" style="color:var(--danger)">$' + maxPrice.toFixed(2) + '</div><div style="font-size:0.8em;color:var(--text-muted);margin-top:5px;">' + worstSite.siteName + '</div></div>' +
-                    '<div class="summary-card"><div class="label">📊 متوسط</div><div class="value">$' + parseFloat(avgPrice).toFixed(2) + '</div></div>' +
-                    '<div class="summary-card"><div class="label">💸 توفير</div><div class="value" style="color:var(--success)">$' + savings.toFixed(2) + ' (' + savingsPercent + '%)</div></div>' +
+                    '<div class="summary-card"><div class="label">💰 أقل سعر</div><div class="value" style="color:var(--success)">' + getCurrencySymbol() + convertPrice(minPrice) + '</div><div style="font-size:0.8em;color:var(--text-muted);margin-top:5px;">' + bestSite.siteName + '</div></div>' +
+                    '<div class="summary-card"><div class="label">📈 أعلى سعر</div><div class="value" style="color:var(--danger)">' + getCurrencySymbol() + convertPrice(maxPrice) + '</div><div style="font-size:0.8em;color:var(--text-muted);margin-top:5px;">' + worstSite.siteName + '</div></div>' +
+                    '<div class="summary-card"><div class="label">📊 متوسط</div><div class="value">' + getCurrencySymbol() + convertPrice(parseFloat(avgPrice)) + '</div></div>' +
+                    '<div class="summary-card"><div class="label">💸 توفير</div><div class="value" style="color:var(--success)">' + getCurrencySymbol() + convertPrice(savings) + ' (' + savingsPercent + '%)</div></div>' +
                     '</div></div>';
             }
             container.innerHTML = html || '<div class="empty-state">لا توجد منتجات للمقارنة</div>';
@@ -1259,110 +1407,7 @@
             });
         }
 
-        // ========== TELEGRAM NOTIFICATIONS ==========
-        function sendTelegramNotification(chatId, message) {
-            const telegram = DB.get('telegram') || {};
-            if (!telegram.botToken) return;
-            fetch('https://api.telegram.org/bot' + telegram.botToken + '/sendMessage', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    chat_id: chatId, 
-                    text: message + '\n\n' + (telegram.signature || '🤖 1Click Pay Monitor')
-                })
-            }).then(function(res) {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            }).then(function(data) {
-                if (!data.ok) {
-                    log('❌ خطأ تلجرام API: ' + (data.description || 'Unknown'), 'error');
-                }
-            }).catch(function(err) {
-                log('❌ خطأ تلجرام: ' + err.message, 'error');
-            });
-        }
-
-        function sendComparisonToTelegram(productName, items) {
-            const telegram = DB.get('telegram') || {};
-            if (!telegram.botToken || !telegram.users || telegram.users.length === 0) {
-                showAlert('❌ أكمل إعدادات تلجرام أولاً', 'error'); return;
-            }
-            const prices = items.map(function(i) { return i.price; });
-            const minPrice = Math.min.apply(null, prices);
-            const maxPrice = Math.max.apply(null, prices);
-            const bestItem = items.find(function(i) { return i.price === minPrice; });
-            const worstItem = items.find(function(i) { return i.price === maxPrice; });
-            const savings = maxPrice - minPrice;
-            const savingsPercent = ((savings / maxPrice) * 100).toFixed(1);
-
-            let message = '📊 مقارنة الأسعار\n';
-            message += '━━━━━━━━━━━━━━━━━━━━━\n';
-            message += '🎮 ' + productName + '\n\n';
-            message += '🏆 أفضل سعر:\n';
-            message += '💰 $' + minPrice.toFixed(2) + ' - ' + bestItem.siteName + '\n';
-            if (bestItem.rawPrice && bestItem.exchangeRate !== 1.0) {
-                message += '💱 ' + bestItem.rawPrice + ' ' + bestItem.exchangeCurrency + '\n';
-            }
-            message += '\n📈 أعلى سعر:\n';
-            message += '💰 $' + maxPrice.toFixed(2) + ' - ' + worstItem.siteName + '\n';
-            if (worstItem.rawPrice && worstItem.exchangeRate !== 1.0) {
-                message += '💱 ' + worstItem.rawPrice + ' ' + worstItem.exchangeCurrency + '\n';
-            }
-            message += '\n💸 التوفير المحتمل: $' + savings.toFixed(2) + ' (' + savingsPercent + '%)\n';
-            message += '\n📋 جميع الأسعار:\n';
-            items.forEach(function(item, idx) {
-                const isBest = item.price === minPrice;
-                const icon = isBest ? '🏆' : (item.price === maxPrice ? '📈' : '•');
-                message += icon + ' ' + item.siteName + ': $' + item.price.toFixed(2);
-                if (item.rawPrice && item.exchangeRate !== 1.0) {
-                    message += ' (' + item.rawPrice + ' ' + item.exchangeCurrency + ')';
-                }
-                message += ' ' + (item.available ? '🟢' : '🔴') + '\n';
-            });
-
-            telegram.users.forEach(function(user) {
-                if (user.notifications && user.notifications.comparison) {
-                    sendTelegramNotification(user.chatId, message);
-                }
-            });
-            showAlert('✅ تم إرسال المقارنة للتلجرام', 'success');
-            log('📤 تم إرسال مقارنة للتلجرام: ' + productName, 'success');
-        }
-
-        function sendBestPriceAlert(productName, items) {
-            const telegram = DB.get('telegram') || {};
-            if (!telegram.botToken || !telegram.users || telegram.users.length === 0) return;
-            
-            const prices = items.map(function(i) { return i.price; });
-            const minPrice = Math.min.apply(null, prices);
-            const bestItem = items.find(function(i) { return i.price === minPrice; });
-            
-            let message = '🏆 تنبيه أفضل سعر!\n\n';
-            message += '🎮 ' + productName + '\n';
-            message += '💰 أفضل سعر: $' + minPrice.toFixed(2) + '\n';
-            message += '🌐 الموقع: ' + bestItem.siteName + '\n';
-            if (bestItem.rawPrice && bestItem.exchangeRate !== 1.0) {
-                message += '💱 ' + bestItem.rawPrice + ' ' + bestItem.exchangeCurrency + '\n';
-            }
-            message += '\n📋 جميع الأسعار المتاحة:\n';
-            items.forEach(function(item) {
-                const isBest = item.price === minPrice;
-                message += (isBest ? '🏆 ' : '• ') + item.siteName + ': $' + item.price.toFixed(2);
-                if (item.rawPrice && item.exchangeRate !== 1.0) {
-                    message += ' (' + item.rawPrice + ' ' + item.exchangeCurrency + ')';
-                }
-                message += '\n';
-            });
-
-            telegram.users.forEach(function(user) {
-                if (user.notifications && user.notifications.bestPrice) {
-                    sendTelegramNotification(user.chatId, message);
-                }
-            });
-            log('🏆 تم إرسال تنبيه أفضل سعر: ' + productName, 'success');
-        }
-
-        // ========== TELEGRAM SETUP ==========
+        // ========== TELEGRAM ==========
         function testBotConnection() {
             const botTokenInput = document.getElementById('botToken');
             if (!botTokenInput) return;
@@ -1423,8 +1468,6 @@
                     (user.notifications.bestPrice ? '<span class="notif-tag warning">🏆 أفضل سعر</span>' : '') +
                     (user.notifications.outOfStock ? '<span class="notif-tag danger">⚠️ نفاد</span>' : '') +
                     (user.notifications.backInStock ? '<span class="notif-tag success">✅ توفر</span>' : '') +
-                    (user.notifications.newProduct ? '<span class="notif-tag success">🆕 جديد</span>' : '') +
-                    (user.notifications.comparison ? '<span class="notif-tag warning">⚖️ مقارنة</span>' : '') +
                     '</div></div>';
             }).join('');
             container.querySelectorAll('.site-actions .btn').forEach(function(btn) {
@@ -1447,8 +1490,6 @@
             const userBestPrice = document.getElementById('userBestPrice');
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
-            const userNewProduct = document.getElementById('userNewProduct');
-            const userComparison = document.getElementById('userComparison');
             const modal = document.getElementById('userModal');
             if (editUserId) editUserId.value = '-1';
             if (userName) userName.value = '';
@@ -1458,8 +1499,6 @@
             if (userBestPrice) userBestPrice.checked = true;
             if (userOutOfStock) userOutOfStock.checked = false;
             if (userBackInStock) userBackInStock.checked = false;
-            if (userNewProduct) userNewProduct.checked = true;
-            if (userComparison) userComparison.checked = true;
             updateNotifItems();
             if (modal) modal.classList.add('active');
         }
@@ -1476,19 +1515,15 @@
             const userBestPrice = document.getElementById('userBestPrice');
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
-            const userNewProduct = document.getElementById('userNewProduct');
-            const userComparison = document.getElementById('userComparison');
             const modal = document.getElementById('userModal');
             if (editUserId) editUserId.value = index;
             if (userName) userName.value = user.name;
             if (userChatId) userChatId.value = user.chatId;
             if (userPriceDrop) userPriceDrop.checked = user.notifications.priceDrop;
             if (userPriceRise) userPriceRise.checked = user.notifications.priceRise;
-            if (userBestPrice) userPriceRise.checked = user.notifications.bestPrice;
+            if (userBestPrice) userBestPrice.checked = user.notifications.bestPrice;
             if (userOutOfStock) userOutOfStock.checked = user.notifications.outOfStock;
             if (userBackInStock) userBackInStock.checked = user.notifications.backInStock;
-            if (userNewProduct) userNewProduct.checked = user.notifications.newProduct !== false;
-            if (userComparison) userComparison.checked = user.notifications.comparison !== false;
             updateNotifItems();
             if (modal) modal.classList.add('active');
         }
@@ -1501,9 +1536,10 @@
         }
 
         function saveTelegramUser() {
+            console.log('saveTelegramUser called!');
             const telegram = DB.get('telegram') || { users: [] };
             const editUserId = document.getElementById('editUserId');
-            if (!editUserId) return;
+            if (!editUserId) { console.error('editUserId not found!'); return; }
             const index = parseInt(editUserId.value);
             const userName = document.getElementById('userName');
             const userChatId = document.getElementById('userChatId');
@@ -1512,8 +1548,6 @@
             const userBestPrice = document.getElementById('userBestPrice');
             const userOutOfStock = document.getElementById('userOutOfStock');
             const userBackInStock = document.getElementById('userBackInStock');
-            const userNewProduct = document.getElementById('userNewProduct');
-            const userComparison = document.getElementById('userComparison');
 
             const userData = {
                 name: userName ? userName.value.trim() : '',
@@ -1523,11 +1557,11 @@
                     priceRise: userPriceRise ? userPriceRise.checked : true,
                     bestPrice: userBestPrice ? userBestPrice.checked : true,
                     outOfStock: userOutOfStock ? userOutOfStock.checked : false,
-                    backInStock: userBackInStock ? userBackInStock.checked : false,
-                    newProduct: userNewProduct ? userNewProduct.checked : true,
-                    comparison: userComparison ? userComparison.checked : true
+                    backInStock: userBackInStock ? userBackInStock.checked : false
                 }
             };
+
+            console.log('User data:', userData);
 
             if (!userData.name || !userData.chatId) { 
                 showAlert('❌ الرجاء ملء جميع الحقول'); 
@@ -1563,7 +1597,7 @@
             if (modal) modal.classList.remove('active');
         }
 
-        // ========== MONITORING & PRICE CHECKS ==========
+        // ========== MONITORING ==========
         function setCustomInterval() {
             const intervalInput = document.getElementById('intervalInput');
             if (!intervalInput) return;
@@ -1638,152 +1672,42 @@
             fetchAllProducts();
             const lastCheckEl = document.getElementById('lastCheck');
             if (lastCheckEl) lastCheckEl.textContent = new Date().toLocaleTimeString('ar-SA');
+            checkPriceChanges();
         }
 
-        // ========== IMPROVED PRICE CHANGE DETECTION ==========
         function checkPriceChanges() {
             const data = getData();
             const telegram = DB.get('telegram') || {};
             if (!telegram.botToken || !telegram.users || telegram.users.length === 0) return;
-            
             let changesCount = 0;
-            const previousProducts = {};
-            
-            // Build map of previous products for quick lookup
-            data.history.forEach(function(h) {
-                const key = h.siteId + '_' + h.productId;
-                previousProducts[key] = h;
-            });
-
-            // Collect all products for comparison alerts
-            const comparisonGroups = {};
-
             for (const siteId in data.products) {
                 const siteProducts = data.products[siteId];
                 const site = data.sites.find(function(s) { return s.id == siteId; });
                 if (!site) continue;
-                
                 siteProducts.forEach(function(product) {
-                    const key = siteId + '_' + product.id;
-                    const lastRecord = previousProducts[key];
-                    
-                    // Build comparison groups
-                    const compareKey = product.name.toLowerCase().trim();
-                    if (!comparisonGroups[compareKey]) comparisonGroups[compareKey] = [];
-                    comparisonGroups[compareKey].push({
-                        price: product.price,
-                        siteName: site.name,
-                        available: product.available,
-                        rawPrice: product.rawPrice,
-                        exchangeRate: product.exchangeRate,
-                        exchangeCurrency: product.exchangeCurrency
-                    });
-
-                    if (lastRecord) {
-                        // Price change detection
-                        if (lastRecord.price !== product.price) {
-                            changesCount++;
-                            const change = product.price - lastRecord.price;
-                            const changePercent = ((change / lastRecord.price) * 100).toFixed(1);
-                            
-                            telegram.users.forEach(function(user) {
-                                if (!user.notifications) return;
-                                if (change > 0 && user.notifications.priceRise) {
-                                    sendTelegramNotification(user.chatId, 
-                                        '📈 ارتفاع سعر!\n\n' +
-                                        '🎮 ' + product.name + '\n' +
-                                        '🌐 الموقع: ' + site.name + '\n' +
-                                        '💰 السعر القديم: $' + lastRecord.price.toFixed(2) + '\n' +
-                                        '💰 السعر الجديد: $' + product.price.toFixed(2) + '\n' +
-                                        '📊 التغيير: +' + change.toFixed(2) + ' (+' + changePercent + '%)'
-                                    );
-                                } else if (change < 0 && user.notifications.priceDrop) {
-                                    sendTelegramNotification(user.chatId, 
-                                        '📉 انخفاض سعر!\n\n' +
-                                        '🎮 ' + product.name + '\n' +
-                                        '🌐 الموقع: ' + site.name + '\n' +
-                                        '💰 السعر القديم: $' + lastRecord.price.toFixed(2) + '\n' +
-                                        '💰 السعر الجديد: $' + product.price.toFixed(2) + '\n' +
-                                        '📊 التوفير: $' + Math.abs(change).toFixed(2) + ' (' + Math.abs(changePercent) + '%)'
-                                    );
-                                }
-                            });
-                        }
-                        
-                        // Stock change detection
-                        if (lastRecord.available !== product.available) {
-                            telegram.users.forEach(function(user) {
-                                if (!user.notifications) return;
-                                if (!product.available && user.notifications.outOfStock) {
-                                    sendTelegramNotification(user.chatId, 
-                                        '⚠️ نفاد الكمية!\n\n' +
-                                        '🎮 ' + product.name + '\n' +
-                                        '🌐 الموقع: ' + site.name + '\n' +
-                                        '❌ المنتج لم يعد متوفراً'
-                                    );
-                                } else if (product.available && user.notifications.backInStock) {
-                                    sendTelegramNotification(user.chatId, 
-                                        '✅ توفر المنتج!\n\n' +
-                                        '🎮 ' + product.name + '\n' +
-                                        '🌐 الموقع: ' + site.name + '\n' +
-                                        '💰 السعر: $' + product.price.toFixed(2) + '\n' +
-                                        '🟢 المنتج متوفر الآن'
-                                    );
-                                }
-                            });
-                        }
-                    } else {
-                        // NEW PRODUCT - first time seen
+                    const lastPrice = data.history.find(function(h) { return h.productId === product.id && h.siteId == siteId; });
+                    if (lastPrice && lastPrice.price !== product.price) {
+                        changesCount++;
+                        const change = product.price - lastPrice.price;
                         telegram.users.forEach(function(user) {
-                            if (user.notifications && user.notifications.newProduct) {
-                                sendTelegramNotification(user.chatId, 
-                                    '🆕 منتج جديد!\n\n' +
-                                    '🎮 ' + product.name + '\n' +
-                                    '🌐 الموقع: ' + site.name + '\n' +
-                                    '💰 السعر: $' + product.price.toFixed(2) + '\n' +
-                                    '📂 القسم: ' + (product.category || 'عام') + '\n' +
-                                    (product.available ? '🟢 متوفر' : '🔴 غير متوفر')
-                                );
+                            if (change > 0 && user.notifications.priceRise) {
+                                sendTelegramNotification(user.chatId, '📈 ارتفاع سعر\n' + product.name + '\nالموقع: ' + site.name + '\nالقديم: $' + lastPrice.price + '\nالجديد: $' + product.price);
+                            } else if (change < 0 && user.notifications.priceDrop) {
+                                sendTelegramNotification(user.chatId, '📉 انخفاض سعر\n' + product.name + '\nالموقع: ' + site.name + '\nالقديم: $' + lastPrice.price + '\nالجديد: $' + product.price);
+                            }
+                        });
+                    }
+                    if (lastPrice && lastPrice.available !== product.available) {
+                        telegram.users.forEach(function(user) {
+                            if (!product.available && user.notifications.outOfStock) {
+                                sendTelegramNotification(user.chatId, '⚠️ نفاد الكمية\n' + product.name + '\nالموقع: ' + site.name);
+                            } else if (product.available && user.notifications.backInStock) {
+                                sendTelegramNotification(user.chatId, '✅ توفر المنتج\n' + product.name + '\nالموقع: ' + site.name + '\nالسعر: $' + product.price);
                             }
                         });
                     }
                 });
             }
-
-            // Send comparison alerts for products available on multiple sites
-            for (const productName in comparisonGroups) {
-                const items = comparisonGroups[productName];
-                if (items.length >= 2) {
-                    const prices = items.map(function(i) { return i.price; });
-                    const minPrice = Math.min.apply(null, prices);
-                    const maxPrice = Math.max.apply(null, prices);
-                    
-                    // Only send comparison alert if there's a meaningful difference (>1%)
-                    if (maxPrice > 0 && ((maxPrice - minPrice) / maxPrice) > 0.01) {
-                        telegram.users.forEach(function(user) {
-                            if (user.notifications && user.notifications.comparison) {
-                                // Send summary comparison
-                                let message = '⚖️ مقارنة أسعار - ' + productName + '\n\n';
-                                items.forEach(function(item) {
-                                    const isBest = item.price === minPrice;
-                                    message += (isBest ? '🏆 ' : '• ') + item.siteName + ': $' + item.price.toFixed(2) + '\n';
-                                });
-                                message += '\n🏆 أفضل سعر: $' + minPrice.toFixed(2) + ' في ' + items.find(function(i) { return i.price === minPrice; }).siteName;
-                                sendTelegramNotification(user.chatId, message);
-                            }
-                        });
-                    }
-                    
-                    // Send best price alert if configured
-                    telegram.users.forEach(function(user) {
-                        if (user.notifications && user.notifications.bestPrice) {
-                            sendBestPriceAlert(productName, items);
-                        }
-                    });
-                }
-            }
-
-            // Update history
             const newHistory = [];
             for (const siteId in data.products) {
                 data.products[siteId].forEach(function(p) {
@@ -1792,13 +1716,20 @@
             }
             data.history = newHistory.slice(-5000);
             setData(data);
-            
             const priceChangesEl = document.getElementById('priceChanges');
             if (priceChangesEl) priceChangesEl.textContent = changesCount;
-            
-            if (changesCount > 0) {
-                log('🔔 تم إرسال ' + changesCount + ' إشعار تغيير سعر', 'success');
-            }
+        }
+
+        function sendTelegramNotification(chatId, message) {
+            const telegram = DB.get('telegram') || {};
+            if (!telegram.botToken) return;
+            fetch('https://api.telegram.org/bot' + telegram.botToken + '/sendMessage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: message + '\n' + (telegram.signature || '🤖 1Click Pay Monitor'), parse_mode: 'HTML' })
+            }).catch(function(err) {
+                log('❌ خطأ تلجرام: ' + err.message, 'error');
+            });
         }
 
         // ========== UTILITIES ==========
@@ -1831,11 +1762,93 @@
         function clearLogs() {
             if (!confirm('هل أنت متأكد؟')) return;
             DB.set('logs', []);
-            loadLogs();
+            if (!DB.get('exchangeRates')) {
+                DB.set('exchangeRates', { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 });
+            } loadLogs();
         }
 
         // ========== EVENT LISTENERS ==========
-        function setupEventListeners() {
+        
+        // ========== EXCHANGE RATES ==========
+        function loadExchangeRates() {
+            const savedRates = DB.get('exchangeRates');
+            if (savedRates) {
+                exchangeRates.SAR = savedRates.SAR || 3.75;
+                exchangeRates.AED = savedRates.AED || 3.67;
+                exchangeRates.EGP = savedRates.EGP || 30.9;
+            }
+            const editSAR = document.getElementById('editRateSAR');
+            const editAED = document.getElementById('editRateAED');
+            const editEGP = document.getElementById('editRateEGP');
+            if (editSAR) editSAR.value = exchangeRates.SAR;
+            if (editAED) editAED.value = exchangeRates.AED;
+            if (editEGP) editEGP.value = exchangeRates.EGP;
+            updateExchangeDisplay();
+            updateTestConversion();
+        }
+
+        function updateExchangeDisplay() {
+            const rateSAR = document.getElementById('rateSAR');
+            const rateAED = document.getElementById('rateAED');
+            const rateEGP = document.getElementById('rateEGP');
+            if (rateSAR) rateSAR.textContent = exchangeRates.SAR.toFixed(2);
+            if (rateAED) rateAED.textContent = exchangeRates.AED.toFixed(2);
+            if (rateEGP) rateEGP.textContent = exchangeRates.EGP.toFixed(2);
+        }
+
+        function saveExchangeRates() {
+            const editSAR = document.getElementById('editRateSAR');
+            const editAED = document.getElementById('editRateAED');
+            const editEGP = document.getElementById('editRateEGP');
+            if (!editSAR || !editAED || !editEGP) return;
+            const sar = parseFloat(editSAR.value);
+            const aed = parseFloat(editAED.value);
+            const egp = parseFloat(editEGP.value);
+            if (isNaN(sar) || sar <= 0 || isNaN(aed) || aed <= 0 || isNaN(egp) || egp <= 0) {
+                showAlert('❌ الرجاء إدخال قيم صحيحة أكبر من صفر'); return;
+            }
+            exchangeRates.SAR = sar;
+            exchangeRates.AED = aed;
+            exchangeRates.EGP = egp;
+            DB.set('exchangeRates', { USD: 1, SAR: sar, AED: aed, EGP: egp });
+            updateExchangeDisplay();
+            updateTestConversion();
+            showAlert('✅ تم حفظ أسعار الصرف', 'success');
+            log('💱 تم تحديث أسعار الصرف', 'success');
+        }
+
+        function resetExchangeRates() {
+            exchangeRates.SAR = 3.75;
+            exchangeRates.AED = 3.67;
+            exchangeRates.EGP = 30.9;
+            DB.set('exchangeRates', { USD: 1, SAR: 3.75, AED: 3.67, EGP: 30.9 });
+            const editSAR = document.getElementById('editRateSAR');
+            const editAED = document.getElementById('editRateAED');
+            const editEGP = document.getElementById('editRateEGP');
+            if (editSAR) editSAR.value = 3.75;
+            if (editAED) editAED.value = 3.67;
+            if (editEGP) editEGP.value = 30.9;
+            updateExchangeDisplay();
+            updateTestConversion();
+            showAlert('✅ تم استعادة الأسعار الافتراضية', 'success');
+            log('💱 تم استعادة أسعار الصرف الافتراضية', 'info');
+        }
+
+        function updateTestConversion() {
+            const testAmount = document.getElementById('testAmount');
+            if (!testAmount) return;
+            const amount = parseFloat(testAmount.value) || 0;
+            const testUSD = document.getElementById('testUSD');
+            const testSAR = document.getElementById('testSAR');
+            const testAED = document.getElementById('testAED');
+            const testEGP = document.getElementById('testEGP');
+            if (testUSD) testUSD.textContent = '$' + amount.toFixed(2);
+            if (testSAR) testSAR.textContent = 'ر.س ' + (amount * exchangeRates.SAR).toFixed(2);
+            if (testAED) testAED.textContent = 'د.إ ' + (amount * exchangeRates.AED).toFixed(2);
+            if (testEGP) testEGP.textContent = 'ج.م ' + (amount * exchangeRates.EGP).toFixed(2);
+        }
+
+function setupEventListeners() {
             document.querySelectorAll('.nav-item').forEach(function(item) {
                 item.addEventListener('click', function(e) {
                     const tabName = this.getAttribute('data-tab');
@@ -1893,6 +1906,13 @@
                 loadComparison();
             });
 
+            document.querySelectorAll('.currency-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    const currency = this.getAttribute('data-currency');
+                    if (currency) setCurrency(currency, this);
+                });
+            });
+
             const btnSaveBot = document.getElementById('btnSaveBot');
             if (btnSaveBot) btnSaveBot.addEventListener('click', saveBotConfig);
 
@@ -1937,6 +1957,15 @@
                 });
             });
 
+            const btnSaveRates = document.getElementById('btnSaveRates');
+            if (btnSaveRates) btnSaveRates.addEventListener('click', saveExchangeRates);
+
+            const btnResetRates = document.getElementById('btnResetRates');
+            if (btnResetRates) btnResetRates.addEventListener('click', resetExchangeRates);
+
+            const testAmount = document.getElementById('testAmount');
+            if (testAmount) testAmount.addEventListener('input', updateTestConversion);
+
             // Send comparison to Telegram buttons (delegated event)
             document.addEventListener('click', function(e) {
                 if (e.target && e.target.classList && e.target.classList.contains('btn-send-telegram')) {
@@ -1960,6 +1989,7 @@
                     if (items.length > 0) sendComparisonToTelegram(productName, items);
                 }
             });
+
         }
 
         // ========== INIT ==========
@@ -1977,7 +2007,8 @@
             if (intervalInput) intervalInput.value = settings.interval || 1;
             if (workerUrlInput) workerUrlInput.value = cleanWorkerUrl(settings.workerUrl);
             updateWorkerStatus(); updateStatus(); loadSites();
-            log('🚀 تم التشغيل - v7.1', 'success');
+            loadExchangeRates();
+            log('🚀 تم التشغيل - v7.0', 'success');
             if (data.monitorActive) startMonitorLoop();
             if (settings.workerUrl) {
                 setTimeout(function() {
